@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 print("==================== Data ====================\n")
-dataset = pd.read_excel("PreferenciasBritanicos.xlsx")
+dataset = pd.read_excel("Data/PreferenciasBritanicos.xlsx")
 print(dataset)
 
 # Calculate P(E) and P(I)
