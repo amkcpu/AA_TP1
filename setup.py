@@ -26,7 +26,7 @@ setup(
     description="Machine Learning exercises from ITBA course",
     entry_points={
         'console_scripts': [
-            'ml_tps=ml_tps.cli:main',
+            'ml_tps=ml_tps.cli:cli',
         ],
     },
     install_requires=requirements,
