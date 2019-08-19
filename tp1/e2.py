@@ -4,8 +4,8 @@ import pandas as pd
 dataset = pd.read_excel("data/britishPreference.xlsx")      # import data set
 
 # Calculate P(E) and P(I)
-no_of_examples, no_of_attributes = dataset.shape
-count_english, count_irish = dataset["Nacionalidad"].value_counts()
+no_of_examples, no_of_attributes = dataset.shape            # get data set size
+count_english, count_irish = dataset["Nacionalidad"].value_counts()         # number of English and Irish entries
 prob_english = count_english / no_of_examples
 prob_irish = count_irish / no_of_examples
 
@@ -14,12 +14,11 @@ dataset_english = dataset[dataset["Nacionalidad"] == "E"]   # subset of English 
 dataset_irish = dataset[dataset["Nacionalidad"] == "I"]     # subset of Irish entries
 params = pd.DataFrame(np.array(np.zeros((2, 5))))           # Instantiate parameter matrix
 
-
 # TODO Laplace smoothing?
 for i in range(0, no_of_attributes - 1):                   # for English attributes
     value_counts = dataset_english.iloc[:, i].value_counts(sort=False)    # returns each value found in column i and their frequency
-    ones = value_counts[1]              # get number of 1s for this column
-    params[i][0] = ones/count_english   # divide by no. of English training examples to get frequency
+    ones = value_counts[1]                                 # get number of 1s for this column
+    params[i][0] = ones/count_english                      # divide by no. of English training examples to get frequency
 
 for j in range(0, no_of_attributes - 1):                   # for Irish attributes
     value_counts = dataset_irish.iloc[:, j].value_counts(sort=False)
@@ -39,9 +38,9 @@ hypothesis.iat[1, 0] *= prob_irish                                          # mu
 
 # Output
 print("==================== Data ====================")
-print(dataset)
+print(dataset, "\n")
 
-print("\nP(English) =", prob_english)
+print("P(English) =", prob_english)
 print("P(Irish) =", prob_irish, "\n")
 
 print("==================== Trained parameters ====================")
@@ -49,7 +48,7 @@ params = params.rename(columns={0: "Scones", 1: "Cerveza", 2: "Whiskey", 3: "Ave
 print(params, "\n")
 
 print("==================== Hypothesis ====================")
-print("Given example: x = (1,0,1,1,0)\n")
+print("Given example: x = (", given_example.transpose().to_string(index=False, header=False), ")\n")
 
 hypothesis = hypothesis.rename(columns={0: "Probability"}, index={0: "English", 1: "Irish"})    # legible column and index names
 print(hypothesis, "\n")
