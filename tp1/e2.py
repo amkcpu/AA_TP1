@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 
 dataset = pd.read_excel("data/britishPreference.xlsx")      # import data set
+example_parameter = [1, 0, 1, 1, 0]                         # given by exercise specification
+given_example = pd.DataFrame(np.array(example_parameter).transpose())         # example representation
 
 # Calculate P(E) and P(I)
 no_of_examples, no_of_attributes = dataset.shape            # get data set size
@@ -25,8 +27,7 @@ for j in range(0, no_of_attributes - 1):                   # for Irish attribute
     ones = value_counts[1]
     params[j][1] = ones/count_irish
 
-# Calculate hypothesis for English and Scottish for given example (1,0,1,1,0)
-given_example = pd.DataFrame(np.array([1, 0, 1, 1, 0]).transpose())         # example representation
+# Calculate hypothesis for English and Scottish for given example
 hypothesis = pd.DataFrame(np.array(np.ones((2, 1))))
 
 for i in given_example.index[given_example[0] == 1]:                        # only multiply params where example == 1
@@ -54,11 +55,11 @@ hypothesis = hypothesis.rename(columns={0: "Probability"}, index={0: "English", 
 print(hypothesis, "\n")
 
 # Output and prediction in words
-if hypothesis.iat[0, 0] > hypothesis.iat[1, 0]:
-    print("Because P(English|(1,0,1,1,0)) =", hypothesis.iat[0, 0], "is bigger than P(Irish|(1,0,1,1,0)) =", hypothesis.iat[1, 0], ", ")
+if hypothesis.iat[0, 0] > hypothesis.iat[1, 0]:     # Predict English
+    print("Because P(English|Example) =", hypothesis.iat[0, 0], "is bigger than P(Irish|Example) =", hypothesis.iat[1, 0], ", ")
     print("we predict the given example to be an English person.")
-elif hypothesis.iat[0, 0] < hypothesis.iat[1, 0]:
-    print("Because P(English|(1,0,1,1,0)) = ", hypothesis.iat[0, 0], " is smaller than P(Irish|(1,0,1,1,0)) = ", hypothesis.iat[1, 0], ", ")
+elif hypothesis.iat[0, 0] < hypothesis.iat[1, 0]:   # Predict Irish
+    print("Because P(Irish|Example) =", hypothesis.iat[0, 0], "is smaller than P(Irish|Example) =", hypothesis.iat[1, 0], ", ")
     print("we predict the given example to be an Irish person.")
-else:
+else:                                               # Same likelihood
     print("Same probability for each class.")
