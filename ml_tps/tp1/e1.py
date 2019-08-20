@@ -39,7 +39,7 @@ def main(young_values, old_values, young_probability):
 
     # Add table column with probability that someone (young or old) likes the
     # program i (= P(P_i))
-    prob_p_i = pd.DataFrame(np.array(np.zeros((5, 1)))) # initialize with zeros
+    prob_p_i = pd.DataFrame(np.array(np.zeros((len(old_values)+1, 1)))) # initialize with zeros
 
     for i in range(0, len(prob_p_i) - 1):
         prob_p_i.iloc[i + 1] = (data.iloc[i][0]) * young_probability + \
@@ -50,8 +50,8 @@ def main(young_values, old_values, young_probability):
     data.insert(2, "P(Programa_i)", prob_p_i)   # append to dataset
 
     # Add tables columns for P(joven|P_i) and P(viejo|P_i)
-    prob_young_p_i = pd.DataFrame(np.array(np.zeros((5, 1))))  # initialize with 0
-    prob_old_p_i = pd.DataFrame(np.array(np.zeros((5, 1))))    # initialize with 0
+    prob_young_p_i = pd.DataFrame(np.array(np.zeros((len(old_values)+1, 1))))  # initialize with 0
+    prob_old_p_i = pd.DataFrame(np.array(np.zeros((len(old_values)+1, 1))))    # initialize with 0
 
     for i in range(0, len(prob_young_p_i) - 1):
         prob_young_p_i.iloc[i + 1] = ((data.iloc[i][0]) * young_probability) / data.iloc[i][2]
