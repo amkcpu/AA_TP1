@@ -36,7 +36,9 @@ def e1_3():
     print("1.3")
 
 
-cli.add_command(e1_1)
+from ml_tps.tp1.e1 import main as e1_1m
+
+cli.add_command(e1_1m)
 cli.add_command(e1_2)
 cli.add_command(e1_3)
 

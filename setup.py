@@ -5,7 +5,7 @@
 
 from setuptools import setup, find_packages
 
-requirements = ['Click>=6.0', ]
+requirements = ['Click>=6.0', "numpy>=1.17.0", "pandas>=0.25.0"]
 
 setup_requirements = [ ]
 
