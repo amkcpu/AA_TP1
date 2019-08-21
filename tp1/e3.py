@@ -7,6 +7,8 @@ import os  # for looping over files in directory
 import math  # for NaN checking
 
 
+# Returns number of documents that a given word is found in
+# Requires: word_list (containing words in rows, each document is one column), word (to be searched for)
 # Important for TF-IDF
 def no_documents_contain(word_list, word):
     counter = 0
@@ -19,8 +21,8 @@ def no_documents_contain(word_list, word):
     return counter
 
 
-# Term Frequency-Inverse Document Frequency algorithm
-# Explanation e.g. https://www.freecodecamp.org/news/how-to-process-textual-data-using-tf-idf-in-python-cd2bbc0a94a3/
+# Term Frequency-Inverse Document Frequency (TF-IDF) algorithm
+# Returns pandas.DataFrame (rows: words, columns: documents) with a TF-IDF score associated with each word for each example/document
 # Note: Depending on data set, execution may take a while
 def tf_idf(list_of_words):
     # Get dimensions of the data set
@@ -55,6 +57,25 @@ def tf_idf(list_of_words):
     return tf_idf_scores_result
 
 
+# Returns pandas.DataFrame containing words in rows and the documents containing them in columns
+# Words appearing in some documents, but not all, are NaNs in other columns than their own document
+def extract_words_from_directory(path_name):
+    for filename in os.listdir(path_name):
+        text = codecs.open((path_name + filename), encoding="utf-8").read().lower()  # read file, ensuring Spanish characters can be read
+        temp = pd.DataFrame(re.findall(r"[\w']+", text))  # extract words into DataFrame
+        temp.columns = [filename]  # assign filename as column title
+
+        try:  # error handling for first round
+            words_list  # check if words is defined
+        except NameError:
+            words_list = temp  # if not (first round), assign temp and continue to next round
+            continue
+
+        words_list = pd.concat([words_list, temp], axis=1)  # else, concatenate existing words with new entry
+
+    return words_list
+
+
 # Set categories: E. g. soccer, tennis, fighting (UFC, MMA), rugby, volleyball, hockey, basketball
 example_labels = np.array(["soccer", "fighting", "tennis", "soccer", "soccer",
                            "rugby", "rugby", "volleyball", "tennis", "tennis",
@@ -62,25 +83,10 @@ example_labels = np.array(["soccer", "fighting", "tennis", "soccer", "soccer",
                                                                    "soccer", "soccer", "soccer", "basketball",
                            "fighting"])  # labels are ordered!
 
-# Get words from text file into DataFrame
-path = "data/classificationDoc/sporty/"
+path = "data/classificationDoc/sporty/"  # Set path containing text documents as .txt files
 
-for filename in os.listdir(path):
-    text = codecs.open((path + filename),
-                       encoding="utf-8").read().lower()  # read file, ensuring that Spanish characters can be read
-    temp = pd.DataFrame(re.findall(r"[\w']+", text))  # extract words into DataFrame
-    temp.columns = [filename]  # assign filename as column title
-
-    try:  # error handling for first round
-        words  # check if words is defined
-    except NameError:
-        words = temp  # if not (first round), assign temp and continue to next round
-        continue
-
-    words = pd.concat([words, temp], axis=1)  # else, concatenate existing words with new entry
-
-# Get TF-IDF scores
-tf_idf_scores = tf_idf(words)
+words = extract_words_from_directory(path)  # Get words from text file into DataFrame
+tf_idf_scores = tf_idf(words)  # Get TF-IDF scores for each word in each document
 
 a = 1
 # Select x highest scoring words for each
