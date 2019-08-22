@@ -25,8 +25,12 @@ def no_documents_contain(word_list, word):
 # Returns pandas.DataFrame (rows: words, columns: documents) with a TF-IDF score associated with each word for each example/document
 # Note: Depending on data set, execution may take a while
 def tf_idf(list_of_words):
-    # Get dimensions of the data set
-    document_max_no_of_words, no_of_documents = list_of_words.shape
+    # Get number of documents used (considered to appear as columns)
+    list_dimensions = list_of_words.shape
+    try:
+        no_of_documents = list_dimensions[1]
+    except IndexError:
+        no_of_documents = 0
 
     # First step: Calculate frequency of words for each document
     # For first document
@@ -35,12 +39,12 @@ def tf_idf(list_of_words):
 
     # Other documents (columns are appended to word_frequency)
     for i in range(1, no_of_documents):  # start with second document
-        temp2 = list_of_words.iloc[:, i].value_counts() / list_of_words.iloc[:,
-                                                          0].value_counts().sum()  # frequency for one document
-        word_frequency = pd.concat([word_frequency, temp2], axis=1, sort=True)
+        current_document_no_of_words = list_of_words.iloc[:, 0].value_counts().sum()
+        current_document_word_frequency = list_of_words.iloc[:, i].value_counts() / current_document_no_of_words
 
-    # Useful constants
-    overall_no_of_words, no_of_documents = word_frequency.shape
+        word_frequency = pd.concat([word_frequency, current_document_word_frequency], axis=1, sort=True)
+
+    overall_no_of_words = len(word_frequency.index)
 
     tf_idf_scores_result = word_frequency.copy()
 
@@ -57,51 +61,81 @@ def tf_idf(list_of_words):
     return tf_idf_scores_result
 
 
-# Returns pandas.DataFrame containing words in rows and the documents containing them in columns
-# Words appearing in some documents, but not all, are NaNs in other columns than their own document
-def extract_words_from_directory(path_name):
-    for filename in os.listdir(path_name):
-        text = codecs.open((path_name + filename), encoding="utf-8").read().lower()  # read file, ensuring Spanish characters can be read
-        temp = pd.DataFrame(re.findall(r"[\w']+", text))  # extract words into DataFrame
-        temp.columns = [filename]  # assign filename as column title
+# Returns pandas.DataFrame with documents in columns and the text of the document as in the respective first row
+def extract_text_from_directory(path_name):
+    if path_name[-1:] == "/":   # logic for recognizing directories: has to end with "/"
+        is_directory = True
+    else:
+        is_directory = False
 
-        try:  # error handling for first round
-            words_list  # check if words is defined
-        except NameError:
-            words_list = temp  # if not (first round), assign temp and continue to next round
-            continue
+    text = pd.DataFrame()     # construct empty DataFrame to be filled later
+    if is_directory:    # assuming directory, write text for each document into one column
+        i = 0
+        for filename in os.listdir(path_name):
+            extracted_text = codecs.open((path_name + filename), encoding="utf-8").read().lower()
+            text.insert(i, filename, [extracted_text])  # write text into new column
+            i += 1
+    else:   # path_name is now interpreted as directly linking to a file
+        extracted_text = codecs.open(path_name, encoding="utf-8").read().lower()  # read file, ensuring Int'l characters can be read
+        text.insert(0, "Document1", extracted_text)
 
-        words_list = pd.concat([words_list, temp], axis=1)  # else, concatenate existing words with new entry
-
-    return words_list
+    return text
 
 
-# Set categories: E. g. soccer, tennis, fighting (UFC, MMA), rugby, volleyball, hockey, basketball
-example_labels = np.array(["soccer", "fighting", "tennis", "soccer", "soccer",
-                           "rugby", "rugby", "volleyball", "tennis", "tennis",
-                           "tennis", "hockey", "hockey", "hockey", "soccer"
-                                                                   "soccer", "soccer", "soccer", "basketball",
-                           "fighting"])  # labels are ordered!
+# Input: Text (unformatted)
+# Output: list_of_words (pandas.DataFrame of dimensions no_words x 1) with words in rows
+def extract_words_from_text(text):
+    list_of_words = pd.DataFrame(re.findall(r"[\w']+", text))   # Using RegExp
+    return list_of_words
 
-path = "data/classificationDoc/sporty/"  # Set path containing text documents as .txt files
 
-words = extract_words_from_directory(path)  # Get words from text file into DataFrame
-tf_idf_scores = tf_idf(words)  # Get TF-IDF scores for each word in each document
+def main():
+    # Set categories: E. g. soccer, tennis, fighting (UFC, MMA), rugby, volleyball, hockey, basketball
+    example_labels = np.array(["soccer", "fighting", "tennis", "soccer", "soccer",
+                               "rugby", "rugby", "volleyball", "tennis", "tennis",
+                               "tennis", "hockey", "hockey", "hockey", "soccer"
+                                                                       "soccer", "soccer", "soccer", "basketball",
+                               "fighting"])  # labels are ordered!
 
-a = 1
-# Select x highest scoring words for each
+    path = "data/aa_bayes.tsv"  # Set path containing text documents as .txt files
 
-# ============ Old instructions ==============
-# Calculate feature vector frequency P(feature_i|class_j) = (no. of times feature_i appears in class_j) / (total count of features in class_j)
-# remember to use Laplace (or other) smoothing
+    # words = extract_text_from_directory(path)  # Get words from text file into DataFrame
 
-# Divide data set into training and validation set
+    # Extract information and save in DataFrame
+    data_set = pd.read_csv(path, sep="\t")
 
-# Classify validation data and get results
-# Calculate feature vector frequency
-# Multiply P(feature_i|class_j) for all i, j, for each example
-# Choose class with highest likelihood for each example
+    # Get words
+    words = pd.DataFrame()
 
-# Construct confusion matrix
+    for i in range(0, 15):          # keeping range low for the moment to keep runtime reasonable
+        temp = extract_words_from_text(data_set.iat[i, 1])
+        temp.columns = [i]
+        words = pd.concat([words, temp], axis=1)
 
-# Calculate accuracy, precision, true positives, false positives, F1-score
+    # Get TF-IDF
+    tf_idf_scores = tf_idf(words)
+
+    a = 1
+    # Select x highest scoring words for each category -> feature vectors
+
+    # new training example
+        # for each category: contains
+
+
+    # ============ Old instructions ==============
+    # Calculate feature vector frequency P(feature_i|class_j) = (no. of times feature_i appears in class_j) / (total count of features in class_j)
+    # remember to use Laplace (or other) smoothing
+
+    # Divide data set into training and validation set
+
+    # Classify validation data and get results
+    # Calculate feature vector frequency
+    # Multiply P(feature_i|class_j) for all i, j, for each example
+    # Choose class with highest likelihood for each example
+
+    # Construct confusion matrix
+
+    # Calculate accuracy, precision, true positives, false positives, F1-score
+
+if __name__ ==  "__main__":
+    main()
