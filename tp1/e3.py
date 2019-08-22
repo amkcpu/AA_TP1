@@ -5,6 +5,7 @@ import re  # for regexp splitting words
 import codecs  # for unicode file reading
 import os  # for looping over files in directory
 import math  # for NaN checking
+import datetime # measure runtime
 
 
 # Returns number of documents that a given word is found in
@@ -103,18 +104,27 @@ def main():
 
     # Extract information and save in DataFrame
     data_set = pd.read_csv(path, sep="\t")
+    data_set = data_set[data_set["categoria"]!="Noticias destacadas"]   # drop large part of database with seemingly generic ("Noticias destacadas") category
 
     # Get words
+    words_then = datetime.datetime.now()
+
     words = pd.DataFrame()
 
-    for i in range(0, 15):          # keeping range low for the moment to keep runtime reasonable
+    for i in range(0, 50):          # keeping range low for the moment to keep runtime reasonable
         temp = extract_words_from_text(data_set.iat[i, 1])
         temp.columns = [i]
         words = pd.concat([words, temp], axis=1)
 
+    words_now = datetime.datetime.now()
+    print("Runtime of title parsing: ", divmod((words_now - words_then).total_seconds(), 60), "\n")
+
+    then = datetime.datetime.now()
     # Get TF-IDF
     tf_idf_scores = tf_idf(words)
 
+    now = datetime.datetime.now()
+    print("Runtime of TF-IDF: ", divmod((now - then).total_seconds(), 60))
     a = 1
     # Select x highest scoring words for each category -> feature vectors
 
