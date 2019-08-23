@@ -56,7 +56,7 @@ def tf_idf(list_of_words):
             idf_score = np.log(no_of_documents / no_documents_contain(list_of_words, index_name))
             tf_idf_scores_result.iloc[j, k] = tf_score * idf_score
 
-    return tf_idf_scores_result, word_frequency
+    return tf_idf_scores_result
 
 
 # Returns pandas.DataFrame with documents in columns and the text of the document as in the respective first row
@@ -126,17 +126,17 @@ def main():
     #  http://www.3engine.net/wp/2015/02/stemming-con-python/
     words_then = datetime.datetime.now()    # for measuring runtime
 
-    words = list()          # will contain words from all data subsets, each as one list element
+    words = list()  # will contain words from all data subsets, each as one list element
 
-    for subset_name, subset_data in categories.items():
-        words_one_subset = pd.DataFrame()
-        
-        for i in range(0, no_of_training_examples):          # keeping range low for the moment to keep runtime reasonable
-            words_one_title = extract_words_from_text(subset_data.iat[i, 1], True)
-            words_one_title.columns = [(subset_name, i)]
-            words_one_subset = pd.concat([words_one_subset, words_one_title], axis=1)
+    for category_name, category_data in categories.items():
+        words_this_category = pd.DataFrame()
 
-        words.append(words_one_subset)
+        for i in range(0, no_of_training_examples):
+            words_one_title = extract_words_from_text(category_data.iat[i, 1], True)
+            words_one_title.columns = [(category_name, i)]
+            words_this_category = pd.concat([words_this_category, words_one_title], axis=1)
+
+        words.append(words_this_category)
 
     words_now = datetime.datetime.now()
     print("Runtime of word parsing: ", divmod((words_now - words_then).total_seconds(), 60), "\n")
@@ -145,12 +145,10 @@ def main():
     then = datetime.datetime.now()  # perf measurement
 
     tf_idf_scores = list()
-    word_frequencies = list()
 
     for i in range(0, len(categories)):
-        tfidf_result, freq = tf_idf_test(words[i])     # word frequencies for Bayes classifier, contains NaN
+        tfidf_result = tf_idf(words[i])     # word frequencies for Bayes classifier, contains NaN
         tf_idf_scores.append(tfidf_result)
-        word_frequencies.append(freq)
 
     now = datetime.datetime.now()
     print("Runtime of TF-IDF: ", divmod((now - then).total_seconds(), 60))
@@ -170,6 +168,19 @@ def main():
         keywords.append(temp)
 
     # Retrieve frequency in respective category for each selected word -> parameter
+    keyword_frequency = list()
+
+    for i in range(0, len(categories)):
+        current_category_word_count = pd.DataFrame()
+
+        for j in range(0, no_of_training_examples):
+            counts_one_example = words[i].iloc[:, j].value_counts() # get word count in one example (column)
+            current_category_word_count = pd.concat([current_category_word_count, counts_one_example], axis=1, sort=True)
+
+        category_no_of_words = current_category_word_count.sum().sum()  # get overall number of words in this category
+        temp = current_category_word_count.sum(axis=1) / category_no_of_words   # frequency of words in category
+        temp = temp[temp.index.isin(keywords[i].index)]        # choose subset of words as keywords selected above
+        keyword_frequency.append(temp)
 
     # Bayes classifier
         # examples should start from index no_of_training_examples
