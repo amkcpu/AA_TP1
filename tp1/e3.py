@@ -40,7 +40,7 @@ def tf_idf(list_of_words):
 
     # Other documents (columns are appended to word_frequency)
     for i in range(1, no_of_documents):  # start with second document
-        current_document_no_of_words = list_of_words.iloc[:, 0].value_counts().sum()
+        current_document_no_of_words = list_of_words.iloc[:, i].value_counts().sum()
         current_document_word_frequency = list_of_words.iloc[:, i].value_counts() / current_document_no_of_words
 
         word_frequency = pd.concat([word_frequency, current_document_word_frequency], axis=1, sort=True)
@@ -59,7 +59,7 @@ def tf_idf(list_of_words):
             idf_score = np.log(no_of_documents / no_documents_contain(list_of_words, index_name))
             tf_idf_scores_result.iloc[j, k] = tf_score * idf_score
 
-    return tf_idf_scores_result
+    return tf_idf_scores_result, word_frequency
 
 
 # Returns pandas.DataFrame with documents in columns and the text of the document as in the respective first row
@@ -85,7 +85,9 @@ def extract_text_from_directory(path_name):
 
 # Input: Text (unformatted)
 # Output: list_of_words (pandas.DataFrame of dimensions no_words x 1) with words in rows
-def extract_words_from_text(text):
+def extract_words_from_text(text, prevent_uppercase_duplicates=False):
+    if prevent_uppercase_duplicates:
+        text = text.lower()
     list_of_words = pd.DataFrame(re.findall(r"[\w']+", text))   # Using RegExp
     return list_of_words
 
@@ -98,40 +100,95 @@ def main():
                                                                        "soccer", "soccer", "soccer", "basketball",
                                "fighting"])  # labels are ordered!
 
+    # Adjust important variables
     path = "data/aa_bayes.tsv"  # Set path containing text documents as .txt files
-
-    # words = extract_text_from_directory(path)  # Get words from text file into DataFrame
+    no_of_training_examples = 10    # data set size per category is around 3850 TODO do we want this to be a percentage?
+    no_of_keywords = 20         # how many highest scoring words on TF-IDF are selected as features
 
     # Extract information and save in DataFrame
     data_set = pd.read_csv(path, sep="\t")
-    data_set = data_set[data_set["categoria"]!="Noticias destacadas"]   # drop large part of database with seemingly generic ("Noticias destacadas") category
+
+    # TODO find smarter way to separate given data sets
+    data_set_deportes = data_set[data_set["categoria"]=="Deportes"]
+    data_set_destacadas = data_set[data_set["categoria"]=="Destacadas"]
+    data_set_economia = data_set[data_set["categoria"]=="Economia"]
+    data_set_entretenimiento = data_set[data_set["categoria"]=="Entretenimiento"]
+    data_set_internacional = data_set[data_set["categoria"]=="Internacional"]
+    data_set_nacional = data_set[data_set["categoria"]=="Nacional"]
+    data_set_salud = data_set[data_set["categoria"]=="Salud"]
+    data_set_ciencia_tecnologia = data_set[data_set["categoria"]=="Ciencia y Tecnologia"]
+    # Leaving out the massive, unspecific "Noticias destacadas" category
+
+    categories = {"Deporte": data_set_deportes, "Destacadas": data_set_destacadas, "Economia": data_set_economia,
+                  "Entretenimiento": data_set_entretenimiento, "Internacional": data_set_internacional,
+                  "Nacional": data_set_nacional, "Salud": data_set_salud,
+                  "CienciaTec": data_set_ciencia_tecnologia}
 
     # Get words
-    words_then = datetime.datetime.now()
+    # TODO Consider implementing Porter stemming to reduce redundancy
+    #  http://www.3engine.net/wp/2015/02/stemming-con-python/
+    words_then = datetime.datetime.now()    # for measuring runtime
 
-    words = pd.DataFrame()
+    words = list()          # will contain words from all data subsets, each as one list element
 
-    for i in range(0, 50):          # keeping range low for the moment to keep runtime reasonable
-        temp = extract_words_from_text(data_set.iat[i, 1])
-        temp.columns = [i]
-        words = pd.concat([words, temp], axis=1)
+    for subset_name, subset_data in categories.items():
+        words_one_subset = pd.DataFrame()
+        
+        for i in range(0, no_of_training_examples):          # keeping range low for the moment to keep runtime reasonable
+            words_one_title = extract_words_from_text(subset_data.iat[i, 1], True)
+            words_one_title.columns = [(subset_name, i)]
+            words_one_subset = pd.concat([words_one_subset, words_one_title], axis=1)
+
+        words.append(words_one_subset)
 
     words_now = datetime.datetime.now()
-    print("Runtime of title parsing: ", divmod((words_now - words_then).total_seconds(), 60), "\n")
+    print("Runtime of word parsing: ", divmod((words_now - words_then).total_seconds(), 60), "\n")
 
-    then = datetime.datetime.now()
     # Get TF-IDF
-    tf_idf_scores = tf_idf(words)
+    then = datetime.datetime.now()  # perf measurement
+
+    tf_idf_scores = list()
+    word_frequencies = list()
+
+    for i in range(0, len(categories)):
+        tfidf_result, freq = tf_idf(words[i])     # word frequencies for Bayes classifier, contains NaN
+        tf_idf_scores.append(tfidf_result)
+        word_frequencies.append(freq)
 
     now = datetime.datetime.now()
     print("Runtime of TF-IDF: ", divmod((now - then).total_seconds(), 60))
-    a = 1
+
+    # Get sorted maximum TF-IDF scores for each category, with associated words as indices
+    max_tfidf_scores = list()
+
+    for i in range(0, len(categories)):
+        temp = tf_idf_scores[i].max(axis=1).sort_values(ascending=False)
+        max_tfidf_scores.append(temp)
+
     # Select x highest scoring words for each category -> feature vectors
+    keywords = list()
 
-    # new training example
-        # for each category: contains
+    for i in range(0, len(categories)):
+        temp = max_tfidf_scores[i].head(no_of_keywords)
+        keywords.append(temp)
+
+    # Retrieve frequency in respective category for each selected word -> parameter
+
+    # Bayes classifier
+        # examples should start from index no_of_training_examples
+        # example.contains(list_of_keywords)
+        # for keyword found: multiply keyword.frequency
+        # at the end multiply with p(given_category)
+        # find class with highest probability -> prediction
+
+    # evaluation
+        # confusion matrix
+        # TP rate, FP rate
+        # accuracy, precision, recall, F1-score
 
 
+
+    a = 1
     # ============ Old instructions ==============
     # Calculate feature vector frequency P(feature_i|class_j) = (no. of times feature_i appears in class_j) / (total count of features in class_j)
     # remember to use Laplace (or other) smoothing
@@ -141,11 +198,6 @@ def main():
     # Classify validation data and get results
     # Calculate feature vector frequency
     # Multiply P(feature_i|class_j) for all i, j, for each example
-    # Choose class with highest likelihood for each example
-
-    # Construct confusion matrix
-
-    # Calculate accuracy, precision, true positives, false positives, F1-score
 
 if __name__ ==  "__main__":
     main()
