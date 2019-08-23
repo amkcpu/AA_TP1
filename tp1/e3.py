@@ -34,12 +34,9 @@ def tf_idf(list_of_words):
         no_of_documents = 0
 
     # First step: Calculate frequency of words for each document
-    # For first document
-    no_words_expl_1 = list_of_words.iloc[:, 0].value_counts().sum()
-    word_frequency = list_of_words.iloc[:, 0].value_counts() / no_words_expl_1
+    word_frequency = pd.DataFrame()
 
-    # Other documents (columns are appended to word_frequency)
-    for i in range(1, no_of_documents):  # start with second document
+    for i in range(0, no_of_documents):
         current_document_no_of_words = list_of_words.iloc[:, i].value_counts().sum()
         current_document_word_frequency = list_of_words.iloc[:, i].value_counts() / current_document_no_of_words
 
@@ -51,11 +48,11 @@ def tf_idf(list_of_words):
 
     for k in range(0, no_of_documents):  # loop through columns (documents)
         for j in range(0, overall_no_of_words):  # loop through rows (words)
-            index_name = tf_idf_scores_result.index[j]  # store name of current index so we know which word it is
-            if math.isnan(tf_idf_scores_result.iat[j, k]):  # handle NaN issues
+            index_name = word_frequency.index[j]  # store name of current index so we know which word it is
+            if math.isnan(word_frequency.iat[j, k]):  # handle NaN issues
                 tf_score = 0
             else:
-                tf_score = tf_idf_scores_result.iat[j, k]
+                tf_score = word_frequency.iat[j, k]
             idf_score = np.log(no_of_documents / no_documents_contain(list_of_words, index_name))
             tf_idf_scores_result.iloc[j, k] = tf_score * idf_score
 
@@ -151,7 +148,7 @@ def main():
     word_frequencies = list()
 
     for i in range(0, len(categories)):
-        tfidf_result, freq = tf_idf(words[i])     # word frequencies for Bayes classifier, contains NaN
+        tfidf_result, freq = tf_idf_test(words[i])     # word frequencies for Bayes classifier, contains NaN
         tf_idf_scores.append(tfidf_result)
         word_frequencies.append(freq)
 
