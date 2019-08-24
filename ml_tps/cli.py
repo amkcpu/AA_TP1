@@ -4,6 +4,9 @@
 import sys
 import click
 
+from ml_tps.tp1.e1 import main as e1_1
+from ml_tps.tp1.e2 import main as e1_2
+
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
@@ -22,23 +25,10 @@ def main(args=None):
 
 
 @click.command()
-def e1_1():
-    print("1.1")
-
-
-@click.command()
-def e1_2():
-    print("1.2")
-
-
-@click.command()
 def e1_3():
     print("1.3")
 
-
-from ml_tps.tp1.e1 import main as e1_1m
-
-cli.add_command(e1_1m)
+cli.add_command(e1_1)
 cli.add_command(e1_2)
 cli.add_command(e1_3)
 
