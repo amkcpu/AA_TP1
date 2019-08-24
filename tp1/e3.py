@@ -101,9 +101,11 @@ def main():
     path = "data/aa_bayes.tsv"  # Set path containing text documents as .txt files
     no_of_training_examples = 10    # data set size per category is around 3850 TODO do we want this to be a percentage?
     no_of_keywords = 20         # how many highest scoring words on TF-IDF are selected as features
+    no_of_validation_examples = 20
 
     # Extract information and save in DataFrame
     data_set = pd.read_csv(path, sep="\t")
+    data_set = data_set[data_set["categoria"]!="Noticias destacadas"]   # Leave out massive, unspecific "Noticias destacadas" category
 
     # TODO find smarter way to separate given data sets
     data_set_deportes = data_set[data_set["categoria"]=="Deportes"]
@@ -114,7 +116,6 @@ def main():
     data_set_nacional = data_set[data_set["categoria"]=="Nacional"]
     data_set_salud = data_set[data_set["categoria"]=="Salud"]
     data_set_ciencia_tecnologia = data_set[data_set["categoria"]=="Ciencia y Tecnologia"]
-    # Leaving out the massive, unspecific "Noticias destacadas" category
 
     categories = {"Deporte": data_set_deportes, "Destacadas": data_set_destacadas, "Economia": data_set_economia,
                   "Entretenimiento": data_set_entretenimiento, "Internacional": data_set_internacional,
@@ -183,7 +184,36 @@ def main():
         keyword_frequency.append(temp)
 
     # Bayes classifier
-        # examples should start from index no_of_training_examples
+    validation_examples = data_set.sample(n=no_of_validation_examples)  # random sample from data set
+    validation_example_predictions = list()
+
+    for i in range(0, no_of_validation_examples):
+        example_words = extract_words_from_text(validation_examples.iloc[i, 1], True)     # get one example at a time
+        category_wise_prob = list()
+
+        for j in range(0, len(categories)):
+            prob_this_category = 0
+            for word in example_words.iterrows():
+                try:        # TODO maybe it's necessary to smoothen the results here (Laplace smoothing)
+                    prob_keyword_in_category = keywords[j][word[1].iat[0]]
+                except KeyError:
+                    continue
+
+                prob_keyword_in_entire_dataset = 0
+
+                for k in range(0, len(categories)):     # get entire dataset probability for this word
+                    try:
+                        prob_keyword_in_entire_dataset += keywords[k][word[1].iat[0]] * (1/8)    # P(P_i) = P(P_i|cat1)*P(cat1) + P(P_i|cat2)*P(cat2)
+                    except KeyError:
+                        continue
+
+                prob_this_category *= prob_keyword_in_category * prob_keyword_in_entire_dataset # P(Cat) = P(Cat|Key1)*P(Key1) + P(Cat|Key2)*P(Key2)
+            category_wise_prob.append(prob_this_category)
+
+        predicted_class = category_wise_prob.index(max(category_wise_prob))
+        predicted_class_name = list(categories.keys())[predicted_class]
+        validation_example_predictions.append(predicted_class_name)
+
         # example.contains(list_of_keywords)
         # for keyword found: multiply keyword.frequency
         # at the end multiply with p(given_category)
