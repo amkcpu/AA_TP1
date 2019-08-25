@@ -6,6 +6,8 @@ import click
 
 from ml_tps.tp1.e1 import main as e1_1
 from ml_tps.tp1.e2 import main as e1_2
+from ml_tps.tp1.e3 import main as e1_3
+from ml_tps.tp1.e4 import main as e1_4
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -23,14 +25,10 @@ def main(args=None):
     click.echo("See click documentation at http://click.pocoo.org/")
     return 0
 
-
-@click.command()
-def e1_3():
-    print("1.3")
-
 cli.add_command(e1_1)
 cli.add_command(e1_2)
 cli.add_command(e1_3)
+cli.add_command(e1_4)
 
 if __name__ == '__main__':
     cli()

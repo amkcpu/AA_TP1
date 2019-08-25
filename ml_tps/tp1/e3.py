@@ -1,12 +1,16 @@
 # Naive Bayes Text classifier
+import click
 import numpy as np
 import pandas as pd
 import re  # for regexp splitting words
 import codecs  # for unicode file reading
 import os  # for looping over files in directory
 import math  # for NaN checking
-import datetime # measure runtime
+import datetime  # measure runtime
 
+dir_path = os.path.dirname(os.path.realpath(__file__))
+DATA_FILEPATH_DEFAULT = f"{dir_path}/data/aa_bayes.tsv"
+TRAINING_PERCENTAGE_DEFAULT = 0.01
 
 # Returns number of documents that a given word is found in
 # Requires: word_list (containing words in rows, each document is one column), word (to be searched for)
@@ -59,6 +63,7 @@ def tf_idf(list_of_words):
     return tf_idf_scores_result
 
 
+# Eric comment -> Is this method used?
 # Returns pandas.DataFrame with documents in columns and the text of the document as in the respective first row
 def extract_text_from_directory(path_name):
     if path_name[-1:] == "/":   # logic for recognizing directories: has to end with "/"
@@ -89,7 +94,12 @@ def extract_words_from_text(text, prevent_uppercase_duplicates=False):
     return list_of_words
 
 
-def main():
+@click.command("e1_3")
+@click.option("--data-filepath", default=DATA_FILEPATH_DEFAULT)
+@click.option("--training-percentage", default=TRAINING_PERCENTAGE_DEFAULT)
+@click.option("--training-amount", required=False, type=int)
+@click.option("--keyword-amount", default=20)
+def main(data_filepath, training_percentage, training_amount, keyword_amount):
     # Set categories: E. g. soccer, tennis, fighting (UFC, MMA), rugby, volleyball, hockey, basketball
     example_labels = np.array(["soccer", "fighting", "tennis", "soccer", "soccer",
                                "rugby", "rugby", "volleyball", "tennis", "tennis",
@@ -98,16 +108,19 @@ def main():
                                "fighting"])  # labels are ordered!
 
     # Adjust important variables
-    path = "data/aa_bayes.tsv"  # Set path containing text documents as .txt files
-    no_of_training_examples = 10    # data set size per category is around 3850 TODO do we want this to be a percentage?
-    no_of_keywords = 20         # how many highest scoring words on TF-IDF are selected as features
-    no_of_validation_examples = 20
+    path = data_filepath  # Set path containing text documents as .txt files
 
     # Extract information and save in DataFrame
     data_set = pd.read_csv(path, sep="\t")
     data_set = data_set[data_set["categoria"]!="Noticias destacadas"]   # Leave out massive, unspecific "Noticias destacadas" category
 
+    # More variables
+    #no_of_training_examples = training_percentage * len(data_set)
+    no_of_keywords = keyword_amount  # how many highest scoring words on TF-IDF are selected as features
+    no_of_validation_examples = 20
+
     # TODO find smarter way to separate given data sets
+    # data_set_dest = data_set[data_set["categoria"] == "Noticias destacadas"]  # Leave out massive, unspecific "Noticias destacadas" category
     data_set_deportes = data_set[data_set["categoria"]=="Deportes"]
     data_set_destacadas = data_set[data_set["categoria"]=="Destacadas"]
     data_set_economia = data_set[data_set["categoria"]=="Economia"]
@@ -120,7 +133,9 @@ def main():
     categories = {"Deporte": data_set_deportes, "Destacadas": data_set_destacadas, "Economia": data_set_economia,
                   "Entretenimiento": data_set_entretenimiento, "Internacional": data_set_internacional,
                   "Nacional": data_set_nacional, "Salud": data_set_salud,
-                  "CienciaTec": data_set_ciencia_tecnologia}
+                  "CienciaTec": data_set_ciencia_tecnologia,
+                  #"NoticiasDest": data_set_dest
+                  }
 
     # Get words
     # TODO Consider implementing Porter stemming to reduce redundancy
@@ -132,7 +147,7 @@ def main():
     for category_name, category_data in categories.items():
         words_this_category = pd.DataFrame()
 
-        for i in range(0, no_of_training_examples):
+        for i in range(0, training_amount or int(len(category_data) * training_percentage)):
             words_one_title = extract_words_from_text(category_data.iat[i, 1], True)
             words_one_title.columns = [(category_name, i)]
             words_this_category = pd.concat([words_this_category, words_one_title], axis=1)
@@ -171,10 +186,10 @@ def main():
     # Retrieve frequency in respective category for each selected word -> parameter
     keyword_frequency = list()
 
-    for i in range(0, len(categories)):
+    for i, cat_dataset in enumerate(categories.values()):
         current_category_word_count = pd.DataFrame()
 
-        for j in range(0, no_of_training_examples):
+        for j in range(0, training_amount or int(len(cat_dataset) * training_percentage)):
             counts_one_example = words[i].iloc[:, j].value_counts() # get word count in one example (column)
             current_category_word_count = pd.concat([current_category_word_count, counts_one_example], axis=1, sort=True)
 
