@@ -6,78 +6,108 @@ import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DATA_FILEPATH_DEFAULT = f"{dir_path}/data/britishPreference.xlsx"
 LIKENESS_ARRAY_DEFAULT = "[1, 0, 1, 1, 0]"
+NATIONALITIES_LIST = "[I,E]"
 
 
-def parse_int_list(string : str):
-    strings = string.replace("[","").replace("]","").split(',')
+def parse_int_list(string: str):
+    strings = string.replace("[", "").replace("]", "").split(',')
     return [int(s) for s in strings]
+
+
+def parse_string_list(string: str):
+    return string.replace("[", "").replace("]", "").split(',')
+
 
 @click.command(name="e1_2")
 @click.option("--data-filepath", default=DATA_FILEPATH_DEFAULT)
 @click.option("--likeness-array", default=LIKENESS_ARRAY_DEFAULT)
-def main(data_filepath, likeness_array):
+@click.option("--nationalities", default=NATIONALITIES_LIST)
+def main(data_filepath, likeness_array, nationalities):
     dataset = pd.read_excel(data_filepath)      # import data set
     example_parameter = parse_int_list(likeness_array) # given by exercise specification
-    given_example = pd.DataFrame(np.array(example_parameter).transpose())         # example representation
-
-    # Calculate P(E) and P(I)
-    no_of_examples, no_of_attributes = dataset.shape            # get data set size
-    count_english, count_irish = dataset["Nacionalidad"].value_counts()         # number of English and Irish entries
-    prob_english = count_english / no_of_examples
-    prob_irish = count_irish / no_of_examples
+    given_example = np.array(example_parameter).transpose()         # example representation
+    nationalities = parse_string_list(nationalities)
 
     # Loop over all attributes associated --> P(a_i|v_j) = P(a_i AND v_j)/P(v_j)
-    dataset_english = dataset[dataset["Nacionalidad"] == "E"]   # subset of English entries
-    dataset_irish = dataset[dataset["Nacionalidad"] == "I"]     # subset of Irish entries
-    params = pd.DataFrame(np.array(np.zeros((2, 5))))           # Instantiate parameter matrix
+    nationalities_datasets = [
+        dataset[
+            dataset["Nacionalidad"] == n
+            ] for n in nationalities
+    ]
 
-    # TODO Laplace smoothing?
-    for i in range(0, no_of_attributes - 1):                   # for English attributes
-        value_counts = dataset_english.iloc[:, i].value_counts(sort=False)    # returns each value found in column i and their frequency
-        ones = value_counts[1]                                 # get number of 1s for this column
-        params[i][0] = ones/count_english                      # divide by no. of English training examples to get frequency
+    # We want P(n|e) with n nationality, e example (e.g. 1, 0, 1, 1, 0)
+    # P(n|e) = P(e|n) * P(n) / P(e)
+    #        P(e_1,...,N|n) = π P(e_i|n)
+    # P(e) = P(e_1,...,N)   = π P(e_i)
 
-    for j in range(0, no_of_attributes - 1):                   # for Irish attributes
-        value_counts = dataset_irish.iloc[:, j].value_counts(sort=False)
-        ones = value_counts[1]
-        params[j][1] = ones/count_irish
+    # Calculate each P(n)
+    no_of_examples, no_of_attributes = dataset.shape  # get data set size
+    attributes = dataset.columns[:-1]
+    nat_count = np.array([
+        len(d) for d in nationalities_datasets
+    ])  # number of English and Irish entries
+    nat_prob = nat_count / no_of_examples
+
+    # Calculate each P(e_att|att)
+    general_likeness = dataset.sum(axis=0)[:-1] / no_of_examples
+    likeness = np.array(np.zeros((len(nationalities), no_of_attributes - 1)))  # Instantiate parameter matrix
+
+    for i, nat_dataset in enumerate(nationalities_datasets):
+        likeness[i] = np.array(nat_dataset.sum(axis=0)[:-1])
+
+    likeness = (likeness.T / nat_count).T
+
+    p_e = np.prod(np.multiply(general_likeness, given_example) + np.multiply(1-general_likeness, 1-given_example))
+    p_e_n = np.prod(np.multiply(likeness, given_example) + np.multiply(1-likeness, 1-given_example), axis=1)
+
+    # For laplace smoothing do not divide, checks for 0, and sum 1 to every one, then divide by (nat count * 2)
 
     # Calculate hypothesis for English and Scottish for given example
-    hypothesis = pd.DataFrame(np.array(np.ones((2, 1))))
+    hypothesis = np.multiply(p_e_n, nat_prob) / p_e
 
-    for i in given_example.index[given_example[0] == 1]:                        # only multiply params where example == 1
-        hypothesis.iat[0, 0] *= params.iat[0, i]*given_example.iat[i, 0]        # calculate probability for English
-        hypothesis.iat[1, 0] *= params.iat[1, i]*given_example.iat[i, 0]        # prob for Irish
-
-    hypothesis.iat[0, 0] *= prob_english                                        # multiply with P(English)
-    hypothesis.iat[1, 0] *= prob_irish                                          # multiply with P(Irish)
-
-    # Output
     print("==================== Data ====================")
-    print(dataset, "\n")
+    print("### Dataset ###")
+    print(dataset)
 
-    print("P(English) =", prob_english)
-    print("P(Irish) =", prob_irish, "\n")
+    print("### P(n) ###")
+    for i, n in enumerate(nationalities):
+        print(f"P({n}) = {nat_prob[i]}")
 
     print("==================== Trained parameters ====================")
-    params = params.rename(columns={0: "Scones", 1: "Cerveza", 2: "Whiskey", 3: "Avena", 4: "Futbol"}, index={0: "English", 1: "Irish"})
-    print(params, "\n")
+    print("### P(e_i) ###")
+    print(general_likeness)
+
+    likeness = pd.DataFrame(likeness).rename(columns={key: value for (key, value) in enumerate(attributes)},
+                                             index={key: value for (key, value) in enumerate(nationalities)})
+
+    print("### P(e_i|n) ###")
+    print(likeness)
+
+    print("### P(e) ###")
+    print(f"P(e): x = {p_e}")
+    p_e_n = pd.DataFrame(p_e_n).rename(index={key: value for (key, value) in enumerate(nationalities)})
+    print("### P(e|n) ###")
+    print(f"P(e|n): x = {p_e_n}")
 
     print("==================== Hypothesis ====================")
-    print("Given example: x = (", given_example.transpose().to_string(index=False, header=False), ")\n")
+    print(f"Given example: x = {given_example}")
 
-    hypothesis = hypothesis.rename(columns={0: "Probability"}, index={0: "English", 1: "Irish"})    # legible column and index names
-    print(hypothesis, "\n")
+    hypothesis = pd \
+        .DataFrame(hypothesis.T)\
+        .rename(columns={0: "Probability"},
+                index={key: value for (key, value) in enumerate(nationalities)}) # legible column and index names
+    print(hypothesis)
 
-    # Output and prediction in words
-    if hypothesis.iat[0, 0] > hypothesis.iat[1, 0]:     # Predict English
-        print("Because P(English|Example) =", hypothesis.iat[0, 0], "is bigger than P(Irish|Example) =", hypothesis.iat[1, 0], ", ")
-        print("we predict the given example to be an English person.")
-    elif hypothesis.iat[0, 0] < hypothesis.iat[1, 0]:   # Predict Irish
-        print("Because P(Irish|Example) =", hypothesis.iat[0, 0], "is smaller than P(Irish|Example) =", hypothesis.iat[1, 0], ", ")
-        print("we predict the given example to be an Irish person.")
-    else:                                               # Same likelihood
-        print("Same probability for each class.")
+    # Multiple nationalities
+    # # Output and prediction in words
+    # if hypothesis.iat[0, 0] > hypothesis.iat[1, 0]:     # Predict English
+    #     print("Because P(English|Example) =", hypothesis.iat[0, 0], "is bigger than P(Irish|Example) =", hypothesis.iat[1, 0], ", ")
+    #     print("we predict the given example to be an English person.")
+    # elif hypothesis.iat[0, 0] < hypothesis.iat[1, 0]:   # Predict Irish
+    #     print("Because P(Irish|Example) =", hypothesis.iat[0, 0], "is smaller than P(Irish|Example) =", hypothesis.iat[1, 0], ", ")
+    #     print("we predict the given example to be an Irish person.")
+    # else:                                               # Same likelihood
+    #     print("Same probability for each class.")
 
 
 if __name__ == '__main__':
