@@ -1,12 +1,13 @@
 import numpy as np
 import pandas as pd
-import math     # for NaN checking
-import re       # for regexp splitting words
-import codecs   # for unicode file reading
-import os       # for looping over files in directory
+import math  # for NaN checking
+import re  # for regexp splitting words
+import codecs  # for unicode file reading
+import os  # for looping over files in directory
 
-# Returns number of documents that a given word is found in
-# Requires: word_list (containing words in rows, each document is one column), word (to be searched for)
+
+# Returns: number of documents that a given word is found in
+# Input: word_list (containing words in rows, each document is one column), word (to be searched for)
 # Important for TF-IDF
 def no_documents_contain(word_list, word):
     counter = 0
@@ -20,7 +21,7 @@ def no_documents_contain(word_list, word):
 
 
 # Term Frequency-Inverse Document Frequency (TF-IDF) algorithm
-# Returns pandas.DataFrame (rows: words, columns: documents) with a TF-IDF score associated with each word for each example/document
+# Returns: pandas.DataFrame (rows: words, columns: documents) with a TF-IDF score associated with each word for each example/document
 # Note: Depending on data set, execution may take a while
 def tf_idf(list_of_words):
     # Get number of documents used (considered to appear as columns)
@@ -55,30 +56,33 @@ def tf_idf(list_of_words):
 
     return tf_idf_scores_result
 
+
+# Returns: list_of_words (pandas.DataFrame of dimensions no_words x 1) with words in rows
 # Input: Text (unformatted)
-# Output: list_of_words (pandas.DataFrame of dimensions no_words x 1) with words in rows
 def extract_words_from_text(text, prevent_uppercase_duplicates=False):
     if prevent_uppercase_duplicates:
         text = text.lower()
-    list_of_words = pd.DataFrame(re.findall(r"[\w']+", text))   # Using RegExp
+    list_of_words = pd.DataFrame(re.findall(r"[\w']+", text))  # Using RegExp
     return list_of_words
 
-# Returns pandas.DataFrame with documents in columns and the text of the document as in the respective first row
+
+# Returns: pandas.DataFrame with documents in columns and the text of the document as in the respective first row
 def extract_text_from_directory(path_name):
-    if path_name[-1:] == "/":   # logic for recognizing directories: has to end with "/"
+    if path_name[-1:] == "/":  # logic for recognizing directories: has to end with "/"
         is_directory = True
     else:
         is_directory = False
 
-    text = pd.DataFrame()     # construct empty DataFrame to be filled later
-    if is_directory:    # assuming directory, write text for each document into one column
+    text = pd.DataFrame()  # construct empty DataFrame to be filled later
+    if is_directory:  # assuming directory, write text for each document into one column
         i = 0
         for filename in os.listdir(path_name):
             extracted_text = codecs.open((path_name + filename), encoding="utf-8").read().lower()
             text.insert(i, filename, [extracted_text])  # write text into new column
             i += 1
-    else:   # path_name is now interpreted as directly linking to a file
-        extracted_text = codecs.open(path_name, encoding="utf-8").read().lower()  # read file, ensuring Int'l characters can be read
+    else:  # path_name is now interpreted as directly linking to a file
+        extracted_text = codecs.open(path_name,
+                                     encoding="utf-8").read().lower()  # read file, ensuring Int'l characters can be read
         text.insert(0, "Document1", extracted_text)
 
     return text
