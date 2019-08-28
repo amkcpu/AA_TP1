@@ -25,25 +25,24 @@ def main(young_values, old_values, young_probability):
     young_values = np.array(parse_probability_list(young_values))
     old_values = np.array(parse_probability_list(old_values))
     if len(old_values) != len(young_values):
-        raise ValueError("Both values list must be equals in length")
+        raise ValueError("Both value lists must be equal in length")
 
-    # Saves probabilities
+    # Save probabilities
     control_probability(young_probability)
     old_probability = 1 - young_probability
 
     # Value matrix
-    values = np.array([young_values, old_values]).T   # write in array
+    values = np.array([young_values, old_values]).T   # write in array and transpose
 
     data = pd.DataFrame(values,
                         range(1, len(old_values) + 1),
                         ["P(Program_i|Young)",
-                         "P(Program_i|Old)"])   # note: vals are transposed
+                         "P(Program_i|Old)"])
     data.index.name = "Program"    # add index column name
 
-    # Add table column with probability that someone (young or old) likes the
-
+    # Add table column with probability that someone at all (young or old) likes a given program
     # P(P_i) = P(P_i|Y)*P(Y) + P(P_i|O)*P(O)
-    # P(P_i) = [P(P_i|Y),P(P_i|O)].[P(Y),P(O)]
+    # P(P_i) = [P(P_i|Y),P(P_i|O)].[P(Y),P(O)] -> matrix multiplication
     program_probability = np.dot(values, np.array([young_probability, old_probability]))
 
     data.insert(2, "P(Program_i)", program_probability)   # append to dataset
@@ -57,21 +56,20 @@ def main(young_values, old_values, young_probability):
     data.insert(4, "P(Old|Program_i)", p_old_as_p_i)   # append to dataset
 
     # Compute prob for given example (hypothesis)
-    # A program likeness is independent from de others, so
-    # P(Young | 1 ∩ 0 ∩ 1 ∩ 0) = P(Y|p1) * P(Y|!p2) * P(Y|p3) * P(Y|!p4)
-    p_y_likeness = p_young_as_p_i[0] * (1 - p_young_as_p_i[1]) * p_young_as_p_i[2] * (1-p_young_as_p_i[3])
-    # P(Old | 1 ∩ 0 ∩ 1 ∩ 0) = P(O|p1) * P(O|!p2) * P(O|p3) * P(O|!p4)
-    p_o_likeness = p_old_as_p_i[0] * (1 - p_old_as_p_i[1]) * p_old_as_p_i[2] * (1-p_old_as_p_i[3])
+    # A program likelihood is independent from the others, so
+    # P(Young | 1 ∩ 0 ∩ 1 ∩ 0) = P(Y|p1) * P(Y|!p2) * P(Y|p3) * P(Y|!p4) * P(Y)
+    p_y_likeness = p_young_as_p_i[0] * (1 - p_young_as_p_i[1]) * p_young_as_p_i[2] * (1-p_young_as_p_i[3]) * young_probability
+    # P(Old | 1 ∩ 0 ∩ 1 ∩ 0) = P(O|p1) * P(O|!p2) * P(O|p3) * P(O|!p4) * P(O)
+    p_o_likeness = p_old_as_p_i[0] * (1 - p_old_as_p_i[1]) * p_old_as_p_i[2] * (1-p_old_as_p_i[3]) * old_probability
 
     # Final printout
     print("==================== Data ====================")
     print("P(Young) = ", young_probability, " | P(Old) = ", old_probability, "\n")
     print(data)
 
-    print("================== Results ===================")
+    print("\n================== Results ===================")
     print("P(Young|1,0,1,0) = ", p_y_likeness)
     print("P(Old|1,0,1,0) = ", p_o_likeness)
-
 
 if __name__ == '__main__':
     main()
