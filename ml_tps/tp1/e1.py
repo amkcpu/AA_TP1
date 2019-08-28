@@ -56,11 +56,11 @@ def main(young_values, old_values, young_probability):
     data.insert(4, "P(Old|Program_i)", p_old_as_p_i)   # append to dataset
 
     # Compute prob for given example (hypothesis)
-    # A program likelihood is independent from the others, so
-    # P(Young | 1 ∩ 0 ∩ 1 ∩ 0) = P(Y|p1) * P(Y|!p2) * P(Y|p3) * P(Y|!p4) * P(Y)
-    p_y_likeness = p_young_as_p_i[0] * (1 - p_young_as_p_i[1]) * p_young_as_p_i[2] * (1-p_young_as_p_i[3]) * young_probability
-    # P(Old | 1 ∩ 0 ∩ 1 ∩ 0) = P(O|p1) * P(O|!p2) * P(O|p3) * P(O|!p4) * P(O)
-    p_o_likeness = p_old_as_p_i[0] * (1 - p_old_as_p_i[1]) * p_old_as_p_i[2] * (1-p_old_as_p_i[3]) * old_probability
+    # P(Y | [1,0,1,0] ) = P(Program1=1|Young) * P(Program2=0|Young) * P(Program3=1|Young) * P(Program3=0|Young) * P(Young)
+    p_y_likelihood = young_values[0] * (1-young_values[1]) * young_values[2] * (1-young_values[0]) * young_probability
+
+    # P(O | [1,0,1,0] ) = P(Program1=1|Old) * P(Program2=0|Old) * P(Program3=1|Old) * P(Program3=0|Old) * P(Old)
+    p_o_likelihood = old_values[0] * (1-old_values[1]) * old_values[2] * (1-old_values[3]) * old_probability
 
     # Final printout
     print("==================== Data ====================")
@@ -68,8 +68,8 @@ def main(young_values, old_values, young_probability):
     print(data)
 
     print("\n================== Results ===================")
-    print("P(Young|1,0,1,0) = ", p_y_likeness)
-    print("P(Old|1,0,1,0) = ", p_o_likeness)
+    print("P(Young|1,0,1,0) = ", p_y_likelihood)
+    print("P(Old|1,0,1,0) = ", p_o_likelihood)
 
 if __name__ == '__main__':
     main()
