@@ -17,24 +17,21 @@ def get_dataset(data_filepath):
 
 
 def p_a_with_r_gre_gpa(dataset,a,r,gre,gpa):
-    # P(A=a|GRE=gre,GPA=gpa,R=r) = P(a,gre,gpa,r) / P(gra,gpe,r) = P(a,gre,gpa,r) / (P(gre,r) *P(gpa,r))
+    print(f"Obtaining P(A={a}|GRE={gre},GPA={gpa},R={r})")
+    # P(A=a,GRE=gre,GPA=gpa,R=r) = P(A=a|GRE=gre,GPA=gpa,R=r) * P(GRE=gre|R=r) * P(GPA=gpa|R=r) * P(R=r)
+    # P(A=a|GRE=gre,GPA=gpa,R=r) = P(A=a,GRE=gre,GPA=gpa,R=r) / (P(GRE=gre|R=r) * P(GPA=gpa|R=r) * P(R=r))
     a_r_gre_gpa = p_a_r_gre_gpa(dataset, a=a, r=r, gre=gre, gpa=gpa)
-    r_gre_gpa = p_r_gre_gpa(dataset,r=r,gre=gre,gpa=gpa)
-    ans = a_r_gre_gpa / r_gre_gpa
-    print(f"P(A={a}|GRE={gre},GPA={gpa},R={r}) = P(A={a},GRE={gre},GPA={gpa},R={r}) / P(GPA={gpa},GPE={gre},R={r}) = "
-          f"{a_r_gre_gpa} / {r_gre_gpa} = {ans}")
+    gre_with_r = p_gre_with_r(dataset,r=r,gre=gre)
+    gpa_with_r = p_gpa_with_r(dataset,r=r,gpa=gpa)
+    r_ = p_r(dataset,r=r)
+    ans = a_r_gre_gpa / (gre_with_r * gpa_with_r * r_)
+    print("P(A=a,GRE=gre,GPA=gpa,R=r) = P(A=a|GRE=gre,GPA=gpa,R=r) * P(GRE=gre|R=r) * P(GPA=gpa|R=r) * P(R=r)")
+    print(f"P(A={a}|GRE={gre},GPA={gpa},R={r}) = P(A={a},GRE={gre},GPA={gpa},R={r}) / (P(GRE={gre}|R={r}) * "
+          f"P(GPA={gpa}|R={r}) * P(R={r})) = {a_r_gre_gpa} / ({gre_with_r} * {gpa_with_r} * {r_}) = {ans}")
     return ans
 
 
-def p_general(dataset, aas=None, rs=None, gres=None, gpas=None):
-    if gpas is None:
-        gpas = [0, 1]
-    if gres is None:
-        gres = [0, 1]
-    if rs is None:
-        rs = [1, 2, 3, 4]
-    if aas is None:
-        aas = [0, 1]
+def p_general(dataset, aas=[0, 1], rs=[1,2,3,4], gres=[0, 1], gpas=[0, 1]):
     ans = dataset.get([(a,gre,gpa,r) for a in aas for r in rs for gre in gres for gpa in gpas]).sum() / dataset.sum()
     print(f"P(A={aas},GRE={gres}, GPA={gpas}, R={rs}) from dataset = {ans}")
     return ans
@@ -45,64 +42,66 @@ def p_a_r_gre_gpa(dataset,a,r,gre,gpa):
     return p_general(dataset,aas=[a],rs=[r],gres=[gre],gpas=[gpa])
 
 
-def p_r_gre_gpa(dataset,r,gre,gpa):
-    # P(gra, gpe, r) = P(gre, r) * P(gpa, r)
-    gre_with_r = p_gre_with_r(dataset, r=r, gre=gre)
-    gpa_with_r = p_gpa_with_r(dataset, r=r, gpa=gpa)
-    r_ = p_r(dataset, r=r)
-    ans = gre_with_r * gpa_with_r * r_
-    print(f"P(GRE={gre}, GPA={gpa}, R={r}) = P(GRE={gre}| R={r}) * P(GPA={gpa}| R={r}) * P(R={r}) = {gre_with_r} * "
-          f"{gpa_with_r} * {r_} = {ans}")
-    return ans
-
-
 def p_r_gre(dataset,r,gre):
-    # P(GRE=gre,R=r) with g in {0,1}, r in {1,2,3,4} and P(g,r) = P(g|r) * P(r)
-    gre_with_r = p_gre_with_r(dataset, r=r, gre=gre)
-    r_ = p_r(dataset,r=r)
-    ans = gre_with_r * r_
-    print(f"P(GRE={gre},R={r}) = P(GRE={gre}|R={r}) * P(R={r}) = {gre_with_r} * {r_}= {ans}")
-    return ans
+    # P(GRE=gre,R=r) with gre in {0,1}, r in {1,2,3,4} and P(g,r) from dataset
+    return p_general(dataset, gres=[gre], rs=[r])
 
 
 def p_r(dataset,r):
     # P(R=r) from dataset
-    ans = dataset.get([(a,gre,gpa,r) for a in [0,1] for gre in [0,1] for gpa in [0,1]]).sum() / dataset.sum()
+    ans = p_general(dataset,rs=[r])
     print(f"P(R={r}) from dataset = {ans}")
     return ans
 
 
 def p_gre_with_r(dataset,r,gre):
-    # P(GRE=g|R=r) from dataset
-    ans = dataset.get([(a,gre,gpa,r) for a in [0,1] for gpa in [0,1]]).sum() / dataset.sum()
-    print(f"P(GRE={gre}|R={r}) from dataset = {ans}")
+    # P(GRE=g|R=r) = P(GRE=gre,R=r) / P(R=r)
+    r_gre = p_r_gre(dataset, r=r, gre=gre)
+    r_ = p_r(dataset, r=r)
+    ans = r_gre / r_
+    print(f"P(GRE={gre}|R={r}) = P(GRE={gre},R={r}) / P(R={r}) = {r_gre} / {r_} = {ans}")
     return ans
 
 
 def p_r_gpa(dataset,r, gpa):
-    # P(GPA=gpa,R=r) with gpa in {0,1}, r in {1,2,3,4} and P(gpa,r) = P(gpa|r) * P(r)
-    gpa_with_r = p_gpa_with_r(dataset, gpa=gpa, r=r)
-    r_ = p_r(dataset,r=r)
-    ans = gpa_with_r * r_
-    print(f"P(GPA={gpa},R={r}) = P(GRE={gpa}|R={r}) * P(R={r}) = {gpa_with_r} * {r_} = {ans}")
-    return ans
+    # P(GPA=gpa,R=r) with gpa in {0,1}, r in {1,2,3,4} and P(gpa,r) from dataset
+    return p_general(dataset, gpas=[gpa], rs=[r])
 
 
 def p_gpa_with_r(dataset,r,gpa):
-    # P(GPA=g|R=r) from dataset
-    ans = dataset.get([(a,gre,gpa,r) for a in [0,1] for gre in [0,1]]).sum() / dataset.get([(a,gre,gpa_,r) for a in [0,1] for gre in [0,1] for gpa_ in [0,1]]).sum()
-    print(f"P(GPA={gpa}|R={r}) from dataset = {ans}")
+    # P(GPA=g|R=r) = P(GPA=gre,R=r) / P(R=r)
+    r_gpa = p_r_gpa(dataset, r=r, gpa=gpa)
+    r_ = p_r(dataset, r=r)
+    ans = r_gpa / r_
+    print(f"P(GPA={gpa}|R={r}) = P(GRE={gpa},R={r}) / P(R={r}) = {r_gpa} / {r_} = {ans}")
+    return ans
+
+#TODO REVISE
+def p_a_with_r(dataset,a,r):
+    print(f"Obtaining P(A={a}|R={r})")
+    # P(A=a,R=r) = P(A=a|GRE,GPA,R=r) * P(R=r)
+    # P(A=a|R=r) = P(A=a,R=r) / P(R=r)
+    a_r = p_a_r(dataset, a=a, r=r)
+    r_ = p_r(dataset,r=r)
+    ans = a_r / r_
+    print("P(A=a,R=r) = P(A=a|GRE,GPA,R=r) * P(R=r)")
+    print(f"P(A={a}|R={r}) = P(A={a},R={r}) / P(R={r}) = {a_r} / {r_}) = {ans}")
     return ans
 
 
+def p_a_r(dataset,a,r):
+    return p_general(dataset,aas=[a], rs=[r])
+
 def ex_a(dataset):
     # P(a=0|R=1) = P(a=0,R=1) / P(R=1)
-    pass
+    ans = p_a_with_r(dataset,a=0,r=1)
+    print(ans)
+    return ans
 
 
 def ex_b(dataset):
-    # 4.b P(a=1|R=2,gre=0,gpa=1) = P(a=1,R=2,gre=0,gpa=1) / P(R=2,gre=1,gpa=1)
-    ans = p_a_with_r_gre_gpa(dataset,1,2,0,1)
+    # 4.b P(a=1|R=2,gre=0,gpa=1)
+    ans = p_a_with_r_gre_gpa(dataset,a=1,r=2,gre=0,gpa=1)
     print(ans)
     return ans
 
@@ -154,11 +153,11 @@ def main(data_filepath):
     # = sum(gpa{0,1}) sum(gre{0,1}) P(a|r,gre,gpa) * P(gre|r) * P(gpa|r) * P(r)
     # = sum(gpa{0,1}) sum(gre{0,1}) (P(a,gpa,gpe,r) / P(r,gpa,gre) = P(a,gpa,gpe,r) / (P(r,gpa)*P(r,gre))) *
     # P(gre|r) * P(gpa|r) * P(r)
-    p_a_with_r_gre_gpa(dataset,0,1,0,0)
-    p_a_with_r_gre_gpa(dataset,1,1,0,0)
+    #p_a_with_r_gre_gpa(dataset,0,1,0,0)
+    #p_a_with_r_gre_gpa(dataset,1,1,0,0)
 
 
-    ex_b(dataset)
+    ex_a(dataset)
     o = 5
 
 
