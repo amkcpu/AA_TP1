@@ -42,14 +42,14 @@ def main(data_filepath, likeness_array, nationalities):
 
     # Calculate each P(n)
     no_of_examples, no_of_attributes = dataset.shape  # get data set size
-    attributes = dataset.columns[:-1]
+    attributes = dataset.columns[:-1]                 # ignore last column of data set containing category (E, I)
     nat_count = np.array([
         len(d) for d in nationalities_datasets
     ])  # number of English and Irish entries
     nat_prob = nat_count / no_of_examples
 
     # Calculate each P(e_att|att)
-    general_likeness = dataset.sum(axis=0)[:-1] / no_of_examples
+    general_likeness = dataset.sum(axis=0)[:-1] / no_of_examples    # prob for each attribute (e. g. cerveza)
     likeness = np.array(np.zeros((len(nationalities), no_of_attributes - 1)))  # Instantiate parameter matrix
 
     for i, nat_dataset in enumerate(nationalities_datasets):
@@ -69,34 +69,35 @@ def main(data_filepath, likeness_array, nationalities):
     print("### Dataset ###")
     print(dataset)
 
-    print("### P(n) ###")
+    print("\n### P(n) ###")
     for i, n in enumerate(nationalities):
         print(f"P({n}) = {nat_prob[i]}")
 
-    print("==================== Trained parameters ====================")
+    print("\n==================== Trained parameters ====================")
     print("### P(e_i) ###")
     print(general_likeness)
 
     likeness = pd.DataFrame(likeness).rename(columns={key: value for (key, value) in enumerate(attributes)},
                                              index={key: value for (key, value) in enumerate(nationalities)})
 
-    print("### P(e_i|n) ###")
+    print("\n### P(e_i|n) ###")
     print(likeness)
 
-    print("### P(e) ###")
+    print("\n### P(e) ###")
     print(f"P(e): x = {p_e}")
     p_e_n = pd.DataFrame(p_e_n).rename(index={key: value for (key, value) in enumerate(nationalities)})
-    print("### P(e|n) ###")
+
+    print("\n### P(e|n) ###")
     print(f"P(e|n): x = {p_e_n}")
 
-    print("==================== Hypothesis ====================")
+    print("\n==================== Hypothesis ====================")
     print(f"Given example: x = {given_example}")
 
     hypothesis = pd \
         .DataFrame(hypothesis.T)\
         .rename(columns={0: "Probability"},
                 index={key: value for (key, value) in enumerate(nationalities)}) # legible column and index names
-    print(hypothesis)
+    print("\n", hypothesis)
 
     # Multiple nationalities
     # # Output and prediction in words
