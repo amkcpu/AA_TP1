@@ -18,28 +18,19 @@ TRAINING_PERCENTAGE_DEFAULT = 0.002
 @click.option("--training-amount", required=False, type=int)
 @click.option("--keyword-amount", default=20)
 def main(data_filepath, training_percentage, training_amount, keyword_amount):
-    # Set categories: E. g. soccer, tennis, fighting (UFC, MMA), rugby, volleyball, hockey, basketball
-    example_labels = np.array(["soccer", "fighting", "tennis", "soccer", "soccer",
-                               "rugby", "rugby", "volleyball", "tennis", "tennis",
-                               "tennis", "hockey", "hockey", "hockey", "soccer"
-                                                                       "soccer", "soccer", "soccer", "basketball",
-                               "fighting"])  # labels are ordered!
-
-    # Adjust important variables
+    # ============== Variable setup ==============
     path = data_filepath  # Set path containing text documents as .txt files
-
-    # Extract information and save in DataFrame
-    data_set = pd.read_csv(path, sep="\t")
-    data_set = data_set[
-        data_set["categoria"] != "Noticias destacadas"]  # Leave out massive, unspecific "Noticias destacadas" category
-
-    # More variables
     # no_of_training_examples = training_percentage * len(data_set)
     no_of_keywords = keyword_amount  # how many highest scoring words on TF-IDF are selected as features
     no_of_validation_examples = 20
 
+    # ============== Get and process data ==============
+    # Extract information and save in DataFrame
+    data_set = pd.read_csv(path, sep="\t")
+    data_set = data_set[data_set["categoria"] != "Noticias destacadas"]  # Leave out massive, unspecific "Noticias destacadas" category
+
+    # Split data set into data subsets by category
     # TODO find smarter way to separate given data sets
-    # data_set_dest = data_set[data_set["categoria"] == "Noticias destacadas"]  # Leave out massive, unspecific "Noticias destacadas" category
     data_set_deportes = data_set[data_set["categoria"] == "Deportes"]
     data_set_destacadas = data_set[data_set["categoria"] == "Destacadas"]
     data_set_economia = data_set[data_set["categoria"] == "Economia"]
@@ -48,15 +39,20 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount):
     data_set_nacional = data_set[data_set["categoria"] == "Nacional"]
     data_set_salud = data_set[data_set["categoria"] == "Salud"]
     data_set_ciencia_tecnologia = data_set[data_set["categoria"] == "Ciencia y Tecnologia"]
+    # data_set_dest = data_set[data_set["categoria"] == "Noticias destacadas"]  # Leave out massive, unspecific "Noticias destacadas" category
 
-    categories = {"Deporte": data_set_deportes, "Destacadas": data_set_destacadas, "Economia": data_set_economia,
-                  "Entretenimiento": data_set_entretenimiento, "Internacional": data_set_internacional,
-                  "Nacional": data_set_nacional, "Salud": data_set_salud,
-                  "CienciaTec": data_set_ciencia_tecnologia,
+    categories = {"Deportes": data_set_deportes,
+                  "Destacadas": data_set_destacadas,
+                  "Economia": data_set_economia,
+                  "Entretenimiento": data_set_entretenimiento,
+                  "Internacional": data_set_internacional,
+                  "Nacional": data_set_nacional,
+                  "Salud": data_set_salud,
+                  "Ciencia y Tecnologia": data_set_ciencia_tecnologia,
                   # "NoticiasDest": data_set_dest
                   }
 
-    # ============== Get words ==============
+    # Extract words from each data (sub-)set
     # TODO Consider implementing Porter stemming to reduce redundancy
     #  http://www.3engine.net/wp/2015/02/stemming-con-python/
     words_then = datetime.datetime.now()  # for measuring runtime
@@ -76,7 +72,7 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount):
     words_now = datetime.datetime.now()
     print("Runtime of word parsing: ", divmod((words_now - words_then).total_seconds(), 60), "\n")
 
-    # ============== Get TF-IDF ==============
+    # ============== Compute TF-IDF scores and, based on those, choose keywords ==============
     # TODO only get TF-IDF score for training set to reduce runtime
     then = datetime.datetime.now()  # perf measurement
 
@@ -153,20 +149,42 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount):
 
     validation_example_predictions_wrapper = pd.Series(validation_example_predictions)
 
-    # ============== evaluation ==============
+    # ============== Evaluation ==============
     # confusion matrix
     validation_examples_actual_category = validation_examples["categoria"]
     validation_examples_actual_category.index = validation_example_predictions_wrapper.index
-    confusion_matrix = pd.crosstab(validation_examples_actual_category, validation_example_predictions_wrapper,
-                                   rownames=['Actual'], colnames=['Predicted'],
-                                   margins=True)
-
+    confusion_matrix = pd.crosstab(validation_example_predictions_wrapper, validation_examples_actual_category,
+                                   rownames=['Actual'], colnames=['Predicted'])
+    confusion_matrix_diag = pd.Series(np.diag(confusion_matrix), index=confusion_matrix.index)  # get diagonal
 
     # TP rate, FP rate
-    # accuracy, precision, recall, F1-score
+    true_positive_rate = 0
+    false_positive_rate = 0
+
+    for i in range(0, len(confusion_matrix_diag)):
+        column_sum = confusion_matrix.iloc[:, i].sum()      # amount of examples actually in category
+        classified_correctly = confusion_matrix_diag[i]
+        classified_incorrectly = column_sum - classified_correctly
+
+        true_positive_rate += classified_correctly / column_sum
+        false_positive_rate += classified_incorrectly / column_sum
+
+    true_positive_rate /= len(confusion_matrix_diag)
+    false_positive_rate /= len(confusion_matrix_diag)
+
+    # accuracy
+    accuracy = confusion_matrix_diag.sum() / confusion_matrix.sum().sum()
+
+    # precision & recall
+    recall = true_positive_rate
     precision = 0
-    recall = 0
-    accuracy = 0
+
+    for i in range(0, len(confusion_matrix_diag)):
+        precision += confusion_matrix_diag[i] / confusion_matrix.iloc[:, i].sum()
+
+    precision /= len(confusion_matrix_diag)     # for average
+
+    # compute f1 score
     f1 = f1_score(precision, recall)
 
     # ============== Final printout ==============
@@ -179,8 +197,13 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount):
     print("Number of validation examples: ", no_of_validation_examples)
 
     print("\n========== Evaluation metrics ==========")
-    print("Accuracy: ", accuracy)
-    print("Confusion matrix:")
+    print("Accuracy: ", accuracy, "\n")
+    print("Confusion matrix:", confusion_matrix)
+    print("\nTrue positive rate (TP): ", true_positive_rate)
+    print("False positive rate (FP): ", false_positive_rate)
+    print("Precision: ", precision)
+    print("Recall (= true positive rate): ", recall)
+    print("F1-score: ", f1)
 
     a = 1
     # ============ Old instructions ==============
