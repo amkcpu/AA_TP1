@@ -9,20 +9,21 @@ from ml_tps.utils.evaluation_utils import f1_score
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DATA_FILEPATH_DEFAULT = f"{dir_path}/data/aa_bayes.tsv"
-TRAINING_PERCENTAGE_DEFAULT = 0.002
-
+TRAINING_PERCENTAGE_DEFAULT = 0.01
+VALIDATION_AMOUNT_DEFAULT = 50
 
 @click.command("e1_3")
 @click.option("--data-filepath", default=DATA_FILEPATH_DEFAULT)
 @click.option("--training-percentage", default=TRAINING_PERCENTAGE_DEFAULT)
 @click.option("--training-amount", required=False, type=int)
 @click.option("--keyword-amount", default=20)
-def main(data_filepath, training_percentage, training_amount, keyword_amount):
+@click.option("--validation-amount", default=VALIDATION_AMOUNT_DEFAULT)
+def main(data_filepath, training_percentage, training_amount, keyword_amount, validation_amount):
     # ============== Variable setup ==============
     path = data_filepath  # Set path containing text documents as .txt files
     # no_of_training_examples = training_percentage * len(data_set)
     no_of_keywords = keyword_amount  # how many highest scoring words on TF-IDF are selected as features
-    no_of_validation_examples = 20
+    no_of_validation_examples = validation_amount
 
     # ============== Get and process data ==============
     # Extract information and save in DataFrame
@@ -117,6 +118,7 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount):
 
     # ============== Bayes classifier ==============
     validation_examples = data_set.sample(n=no_of_validation_examples)  # random sample from data set
+    # TODO ensure that examples from each category are chosen, to solve problem described below (evaluation, confusion matrix)
     validation_example_predictions = list()
 
     for i in range(0, no_of_validation_examples):  # get one example at a time
@@ -151,6 +153,11 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount):
 
     # ============== Evaluation ==============
     # confusion matrix
+    # TODO this actually contains an error occurring in small validation samples,
+    #  whereby some categories might not be predicted and the confusion matrix might
+    #  not by square. An error gets thrown when initializing confusion_matrix_diag, but
+    #  already the confusion_matrix itself is faulty.
+    #  Using a large sample, this problem is avoided.
     validation_examples_actual_category = validation_examples["categoria"]
     validation_examples_actual_category.index = validation_example_predictions_wrapper.index
     confusion_matrix = pd.crosstab(validation_example_predictions_wrapper, validation_examples_actual_category,
@@ -169,8 +176,8 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount):
         true_positive_rate += classified_correctly / column_sum
         false_positive_rate += classified_incorrectly / column_sum
 
-    true_positive_rate /= len(confusion_matrix_diag)
-    false_positive_rate /= len(confusion_matrix_diag)
+    true_positive_rate /= len(confusion_matrix_diag)    # for average
+    false_positive_rate /= len(confusion_matrix_diag)   # for average
 
     # accuracy
     accuracy = confusion_matrix_diag.sum() / confusion_matrix.sum().sum()
@@ -189,11 +196,12 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount):
 
     # ============== Final printout ==============
     print("\n========== Data set info ==========")
-    print("Data set dimensions:", data_set.shape)
-    print("Category info:", categories.keys())
+    print("Number of entries in data set: ", data_set.shape[0], " Number of attributes: ", data_set.shape[1])
+    print("Categories found:", categories.keys())
 
     print("\n========== Classifier info ==========")
-    print("Number of training examples: ", current_category_word_count.shape[0])
+    print("Number of training examples: ", current_category_word_count.shape[0], "x", len(categories),
+          "=", current_category_word_count.shape[0]*len(categories))
     print("Number of validation examples: ", no_of_validation_examples)
 
     print("\n========== Evaluation metrics ==========")
@@ -206,16 +214,6 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount):
     print("F1-score: ", f1)
 
     a = 1
-    # ============ Old instructions ==============
-    # Calculate feature vector frequency P(feature_i|class_j) = (no. of times feature_i appears in class_j) / (total count of features in class_j)
-    # remember to use Laplace (or other) smoothing
-
-    # Divide data set into training and validation set
-
-    # Classify validation data and get results
-    # Calculate feature vector frequency
-    # Multiply P(feature_i|class_j) for all i, j, for each example
-
 
 if __name__ == "__main__":
     main()
