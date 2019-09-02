@@ -1,4 +1,5 @@
 # Bayesian Network
+import numpy as np
 import pandas as pd
 import click
 import os
@@ -16,85 +17,112 @@ def get_dataset(data_filepath):
     return dataset
 
 
-def p_a_with_r_gre_gpa(dataset,a,r,gre,gpa):
-    print(f"Obtaining P(A={a}|GRE={gre},GPA={gpa},R={r})")
-    # P(A=a,GRE=gre,GPA=gpa,R=r) = P(A=a|GRE=gre,GPA=gpa,R=r) * P(GRE=gre|R=r) * P(GPA=gpa|R=r) * P(R=r)
-    # P(A=a|GRE=gre,GPA=gpa,R=r) = P(A=a,GRE=gre,GPA=gpa,R=r) / (P(GRE=gre|R=r) * P(GPA=gpa|R=r) * P(R=r))
-    a_r_gre_gpa = p_a_r_gre_gpa(dataset, a=a, r=r, gre=gre, gpa=gpa)
-    gre_with_r = p_gre_with_r(dataset,r=r,gre=gre)
-    gpa_with_r = p_gpa_with_r(dataset,r=r,gpa=gpa)
-    r_ = p_r(dataset,r=r)
-    ans = a_r_gre_gpa / (gre_with_r * gpa_with_r * r_)
-    print("P(A=a,GRE=gre,GPA=gpa,R=r) = P(A=a|GRE=gre,GPA=gpa,R=r) * P(GRE=gre|R=r) * P(GPA=gpa|R=r) * P(R=r)")
-    print(f"P(A={a}|GRE={gre},GPA={gpa},R={r}) = P(A={a},GRE={gre},GPA={gpa},R={r}) / (P(GRE={gre}|R={r}) * "
-          f"P(GPA={gpa}|R={r}) * P(R={r})) = {a_r_gre_gpa} / ({gre_with_r} * {gpa_with_r} * {r_}) = {ans}")
+def p_a_with_r_gre_gpa(dataset,a,r,gre,gpa,tabs=0):
+    print(f"{t_text(tabs)}Obtaining P(A={a}|GRE={gre},GPA={gpa},R={r})")
+    ans = p_with_general(dataset,aas=[a], rs=[r], gres=[gre], gpas= [gpa], tabs = tabs+1)
+    print(f"{t_text(tabs)}P(A={a}|GRE={gre},GPA={gpa},R={r}) = {ans} from dataset")
     return ans
 
 
-def p_general(dataset, aas=[0, 1], rs=[1,2,3,4], gres=[0, 1], gpas=[0, 1]):
+def t_text(tabs):
+    return '\t'*tabs
+
+def pp_general(dataset, a, r, gre, gpa, tabs):
+    # P(A=a,GRE=gre,GPA=gpa,R=r) = P(A=a|Father(A)) * P(R=r|Father(R)) * P(GRE=gre|Father(GRE)) * P(GPA=gpa|Father(GPA))
+    # P(A=a,GRE=gre,GPA=gpa,R=r) = P(A=a|GRE=gre,GPA=gpa,R=r) * P(R=r) * P(GRE=gre|R=r) * P(GPA=gpa|R=r)
+    print(f"{t_text(tabs=tabs)}Obtaining P(A={a},GRE={gre}, GPA={gpa}, R={r})")
+    a_with_r_gre_gpa = p_a_with_r_gre_gpa(dataset, a=a, r=r, gre=gre, gpa=gpa, tabs=tabs+1)
+    r_ = p_r(dataset, r=r,tabs=tabs+1)
+    gre_with_r = p_gre_with_r(dataset, r=r, gre=gre,tabs=tabs+1)
+    gpa_with_r = p_gpa_with_r(dataset, r=r, gpa=gpa, tabs=tabs+1)
+    ans = a_with_r_gre_gpa * r_ * gre_with_r * gpa_with_r
+    print(f"{t_text(tabs=tabs)}P(A={a},GRE={gre}, GPA={gpa}, R={r}) = {ans}")
+    return ans
+
+
+def p_with_general(dataset, aas=[0, 1], rs=[1,2,3,4], gres=[0, 1], gpas=[0, 1], tabs=0):
+    tabs = tabs+1
+    print(f"{t_text(tabs=tabs)}Obtaining P(A={aas}|GRE={gres}, GPA={gpas}, R={rs})")
     ans = dataset.get([(a,gre,gpa,r) for a in aas for r in rs for gre in gres for gpa in gpas]).sum() / dataset.sum()
-    print(f"P(A={aas},GRE={gres}, GPA={gpas}, R={rs}) from dataset = {ans}")
+    print(f"{t_text(tabs)}P(A={aas}|GRE={gres}, GPA={gpas}, R={rs}) from dataset = {ans}")
     return ans
 
 
-def p_a_r_gre_gpa(dataset,a,r,gre,gpa):
+def p_general(dataset, tabs, aas=[0, 1], rs=[1,2,3,4], gres=[0, 1], gpas=[0, 1]):
+    print(f"{t_text(tabs=tabs)}Obtaining P(A={aas},GRE={gres}, GPA={gpas}, R={rs})")
+    ans = np.array([pp_general(dataset, a=a, gre=gre,gpa=gpa,r=r, tabs=tabs+1) for a in aas for r in rs for gre in gres for gpa in gpas]).sum()
+    print(f"{t_text(tabs)}P(A={aas},GRE={gres}, GPA={gpas}, R={rs}) = {ans}")
+    return ans
+
+
+def p_a_r_gre_gpa(dataset,a,r,gre,gpa,tabs):
+    tabs +=1
     # P(A=a,GRE=gre, GPA=gpa, R=r) with a,gre,gpa in {0,1}, r in 1..4 and P(a,gre,gpa,r) from dataset
-    return p_general(dataset,aas=[a],rs=[r],gres=[gre],gpas=[gpa])
+    print(f"{t_text(tabs=tabs)}Obtaining P(A={a},GRE={gre},GPA={gpa},R={r})")
+    ans = p_general(dataset,aas=[a],rs=[r],gres=[gre],gpas=[gpa],tabs=tabs)
+    print(f"{t_text(tabs=tabs)}Obtaining P(A={a},GRE={gre},GPA={gpa}|R={r})")
+    return ans
 
 
-def p_r_gre(dataset,r,gre):
+
+def p_r_gre(dataset,r,gre,tabs):
+    tabs +=1
     # P(GRE=gre,R=r) with gre in {0,1}, r in {1,2,3,4} and P(g,r) from dataset
-    return p_general(dataset, gres=[gre], rs=[r])
+    print(f"{t_text(tabs=tabs)}Obtaining P(GRE={gre},R={r})")
+    ans = p_general(dataset, gres=[gre], rs=[r], tabs=tabs)
+    print(f"{t_text(tabs=tabs)}P(GRE={gre},R={r}) = {ans}")
+    return ans
 
 
-def p_r(dataset,r):
+def p_r(dataset,r, tabs=0):
     # P(R=r) from dataset
-    ans = p_general(dataset,rs=[r])
-    print(f"P(R={r}) from dataset = {ans}")
+    print(f"{t_text(tabs=tabs)}Obtaining P(R={r})")
+    ans = p_with_general(dataset,rs=[r],tabs=tabs+1)
+    print(f"{t_text(tabs)}P(R={r}) from dataset = {ans}")
     return ans
 
 
-def p_gre_with_r(dataset,r,gre):
-    # P(GRE=g|R=r) = P(GRE=gre,R=r) / P(R=r)
-    r_gre = p_r_gre(dataset, r=r, gre=gre)
-    r_ = p_r(dataset, r=r)
-    ans = r_gre / r_
-    print(f"P(GRE={gre}|R={r}) = P(GRE={gre},R={r}) / P(R={r}) = {r_gre} / {r_} = {ans}")
+def p_gre_with_r(dataset,r,gre,tabs):
+    # P(GRE=g|R=r) from table
+    print(f"{t_text(tabs=tabs)}Obtaining P(GRE={gre}|R={r})")
+    ans = p_with_general(dataset,gres=[gre],rs=[r],tabs=tabs)
+    print(f"{t_text(tabs)}P(GRE={gre}|R={r}) = {ans} from dataset")
     return ans
 
 
-def p_r_gpa(dataset,r, gpa):
+def p_r_gpa(dataset,r, gpa, tabs):
+    tabs += 1
+    print(f"{t_text(tabs=tabs)}Obtaining P(GPA={gpa},R={r})")
     # P(GPA=gpa,R=r) with gpa in {0,1}, r in {1,2,3,4} and P(gpa,r) from dataset
-    return p_general(dataset, gpas=[gpa], rs=[r])
+    return p_general(dataset, gpas=[gpa], rs=[r],tabs=tabs)
 
 
-def p_gpa_with_r(dataset,r,gpa):
-    # P(GPA=g|R=r) = P(GPA=gre,R=r) / P(R=r)
-    r_gpa = p_r_gpa(dataset, r=r, gpa=gpa)
-    r_ = p_r(dataset, r=r)
-    ans = r_gpa / r_
-    print(f"P(GPA={gpa}|R={r}) = P(GRE={gpa},R={r}) / P(R={r}) = {r_gpa} / {r_} = {ans}")
+def p_gpa_with_r(dataset,r,gpa, tabs):
+    # P(GRE=g|R=r) from table
+    print(f"{t_text(tabs=tabs)}Obtaining P(GPA={gpa}|R={r})")
+    ans = p_with_general(dataset, gpas=[gpa], rs=[r], tabs= tabs+1)
+    print(f"{t_text(tabs)}P(GPA={gpa}|R={r}) = {ans} from dataset")
     return ans
 
-#TODO REVISE
-def p_a_with_r(dataset,a,r):
-    print(f"Obtaining P(A={a}|R={r})")
+
+def p_a_with_r(dataset,a,r,tabs=0):
+    print(f"{t_text(tabs=tabs)}Obtaining P(A={a}|R={r})")
     # P(A=a,R=r) = P(A=a|GRE,GPA,R=r) * P(R=r)
     # P(A=a|R=r) = P(A=a,R=r) / P(R=r)
-    a_r = p_a_r(dataset, a=a, r=r)
-    r_ = p_r(dataset,r=r)
+    a_r = p_a_r(dataset, a=a, r=r, tabs=tabs+1)
+    r_ = p_r(dataset,r=r, tabs=tabs+1)
     ans = a_r / r_
-    print("P(A=a,R=r) = P(A=a|GRE,GPA,R=r) * P(R=r)")
-    print(f"P(A={a}|R={r}) = P(A={a},R={r}) / P(R={r}) = {a_r} / {r_}) = {ans}")
+    #print("P(A=a,R=r) = P(A=a|GRE,GPA,R=r) * P(R=r)")
+    print(f"{t_text(tabs)}P(A={a}|R={r}) = P(A={a},R={r}) / P(R={r}) = {a_r} / {r_}) = {ans}")
     return ans
 
 
-def p_a_r(dataset,a,r):
-    return p_general(dataset,aas=[a], rs=[r])
+def p_a_r(dataset,a,r,tabs):
+    return p_general(dataset,aas=[a], rs=[r], tabs=tabs)
 
 def ex_a(dataset):
     # P(a=0|R=1) = P(a=0,R=1) / P(R=1)
-    ans = p_a_with_r(dataset,a=0,r=1)
+    ans = p_a_with_r(dataset,a=0,r=1,tabs=0)
     print(ans)
     return ans
 
