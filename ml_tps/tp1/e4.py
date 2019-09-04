@@ -6,6 +6,90 @@ import os
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DATA_FILEPATH_DEFAULT = f"{dir_path}/data/binary.csv"
+TABLE = {}
+AS = range(0,2)
+GRES = range(0,2)
+GPAS = range(0,2)
+RS = range(1,5)
+
+
+def p_a_with_gre_gpa_r(dataset, a, r, gre, gpa):
+    text = f"P(A={a}|GRE={gre},GPA={gpa},R={r})"
+    if text not in TABLE:
+        TABLE[text] = dataset.get((a,gre,gpa,r)) / dataset.get([(a_,gre,gpa,r) for a_ in AS]).sum()
+    return TABLE[text]
+
+
+def p_gre_with_r(dataset, r, gre):
+    text = f"P(GRE={gre}|R={r})"
+    if text not in TABLE:
+        TABLE[text] = dataset.get([(a,gre,gpa,r) for a in AS for gpa in GPAS]).sum() / \
+                      dataset.get([(a,gre_,gpa,r) for a in AS for gpa in GPAS for gre_ in GRES]).sum()
+    return TABLE[text]
+
+
+def pp_gpa_with_r(dataset,r,gpa):
+    text = f"P(GPA={gpa}|R={r})"
+    if text not in TABLE:
+        TABLE[text] = dataset.get([(a,gre,gpa,r) for a in AS for gre in GRES]).sum() / \
+                      dataset.get([(a,gre,gpa_,r) for a in AS for gre in GRES for gpa_ in GPAS]).sum()
+    return TABLE[text]
+
+
+def pp_r(dataset,r):
+    text = f"P(R={r})"
+    if text not in TABLE:
+        TABLE[text] = dataset.get([(a,gre,gpa,r) for a in AS for gre in GRES for gpa in GPAS]).sum() / dataset.sum()
+    return TABLE[text]
+
+
+def pp_a_gre_gpa_r(dataset,a,r,gre,gpa):
+    #  P(A = a, R = r, GRE = gre, GPA = gpa) = P(A = a/F_admit) * P(rank = r) * P(GRE = gre/F_GRE) * P(GPA = gpa/F_GPA)
+    #  P(A = a, R = r, GRE = gre, GPA = gpa) = P(A = a/GRE=gre,GPA=gpa,R=r) *
+    #                                        P(rank = r) *
+    #                                        P(GRE = gre/R=r) *
+    #                                        P(GPA = gpa/R=r)
+    text = f"P(A={a},GRE={gre},GPA={gpa},R={r})"
+    if text not in TABLE:
+        TABLE[text] = p_a_with_gre_gpa_r(dataset, a=a, r=r, gre=gre, gpa=gpa) * \
+                      pp_r(dataset, r) * \
+                      p_gre_with_r(dataset, r=r, gre=gre) * \
+                      pp_gpa_with_r(dataset,r=r,gpa=gpa)
+    return TABLE[text]
+
+
+def pp_a_with_r(dataset,a,r):
+    text = f"P(A={a}|R={r})"
+    # P(A=a|R=r) = P(A=a,R=r) / P(R=r)
+    # P(A=a|R=r) = SumGRE SumGPA P(A=a,R=r,gpe,gpa) / P(R=r)
+    if text not in TABLE:
+        TABLE[text] = np.array([pp_a_gre_gpa_r(dataset, a=a,r=r, gre=gre, gpa=gpa) for gre in GRES for gpa in GPAS]).sum() / \
+            pp_r(dataset,r=r)
+    return TABLE[text]
+
+
+def complete_table(dataset):
+
+    [p_a_with_gre_gpa_r(dataset, a=a, gre=gre, gpa=gpa, r=r)
+     for a in AS
+     for r in RS
+     for gre in GRES
+     for gpa in GPAS]
+
+    [p_gre_with_r(dataset, gre=gre, r=r)
+     for r in RS
+     for gre in GRES]
+
+    [pp_gpa_with_r(dataset,gpa=gpa,r=r)
+           for r in RS
+           for gpa in GPAS]
+
+    [pp_r(dataset,r=r) for r in RS]
+
+    [pp_a_with_r(dataset, a=a, r=r)
+            for a in AS
+            for r in RS]
+
 
 def get_dataset(data_filepath):
     # Open file
@@ -17,131 +101,24 @@ def get_dataset(data_filepath):
     return dataset
 
 
-def p_a_with_r_gre_gpa(dataset,a,r,gre,gpa,tabs=0):
-    print(f"{t_text(tabs)}Obtaining P(A={a}|GRE={gre},GPA={gpa},R={r})")
-    ans = p_with_general(dataset,aas=[a], rs=[r], gres=[gre], gpas= [gpa], tabs = tabs+1)
-    print(f"{t_text(tabs)}P(A={a}|GRE={gre},GPA={gpa},R={r}) = {ans} from dataset")
-    return ans
+def ex_a(a=0, r=1):
+    key = f'P(A={a}|R={r})'
+    print(f"Ex a => {key} = {TABLE[key]}")
 
 
-def t_text(tabs):
-    return '\t'*tabs
-
-def pp_general(dataset, a, r, gre, gpa, tabs):
-    # P(A=a,GRE=gre,GPA=gpa,R=r) = P(A=a|Father(A)) * P(R=r|Father(R)) * P(GRE=gre|Father(GRE)) * P(GPA=gpa|Father(GPA))
-    # P(A=a,GRE=gre,GPA=gpa,R=r) = P(A=a|GRE=gre,GPA=gpa,R=r) * P(R=r) * P(GRE=gre|R=r) * P(GPA=gpa|R=r)
-    print(f"{t_text(tabs=tabs)}Obtaining P(A={a},GRE={gre}, GPA={gpa}, R={r})")
-    a_with_r_gre_gpa = p_a_with_r_gre_gpa(dataset, a=a, r=r, gre=gre, gpa=gpa, tabs=tabs+1)
-    r_ = p_r(dataset, r=r,tabs=tabs+1)
-    gre_with_r = p_gre_with_r(dataset, r=r, gre=gre,tabs=tabs+1)
-    gpa_with_r = p_gpa_with_r(dataset, r=r, gpa=gpa, tabs=tabs+1)
-    ans = a_with_r_gre_gpa * r_ * gre_with_r * gpa_with_r
-    print(f"{t_text(tabs=tabs)}P(A={a},GRE={gre}, GPA={gpa}, R={r}) = {ans}")
-    return ans
-
-
-def p_with_general(dataset, aas=[0, 1], rs=[1,2,3,4], gres=[0, 1], gpas=[0, 1], tabs=0):
-    tabs = tabs+1
-    print(f"{t_text(tabs=tabs)}Obtaining P(A={aas}|GRE={gres}, GPA={gpas}, R={rs})")
-    ans = dataset.get([(a,gre,gpa,r) for a in aas for r in rs for gre in gres for gpa in gpas]).sum() / dataset.sum()
-    print(f"{t_text(tabs)}P(A={aas}|GRE={gres}, GPA={gpas}, R={rs}) from dataset = {ans}")
-    return ans
-
-
-def p_general(dataset, tabs, aas=[0, 1], rs=[1,2,3,4], gres=[0, 1], gpas=[0, 1]):
-    print(f"{t_text(tabs=tabs)}Obtaining P(A={aas},GRE={gres}, GPA={gpas}, R={rs})")
-    ans = np.array([pp_general(dataset, a=a, gre=gre,gpa=gpa,r=r, tabs=tabs+1) for a in aas for r in rs for gre in gres for gpa in gpas]).sum()
-    print(f"{t_text(tabs)}P(A={aas},GRE={gres}, GPA={gpas}, R={rs}) = {ans}")
-    return ans
-
-
-def p_a_r_gre_gpa(dataset,a,r,gre,gpa,tabs):
-    tabs +=1
-    # P(A=a,GRE=gre, GPA=gpa, R=r) with a,gre,gpa in {0,1}, r in 1..4 and P(a,gre,gpa,r) from dataset
-    print(f"{t_text(tabs=tabs)}Obtaining P(A={a},GRE={gre},GPA={gpa},R={r})")
-    ans = p_general(dataset,aas=[a],rs=[r],gres=[gre],gpas=[gpa],tabs=tabs)
-    print(f"{t_text(tabs=tabs)}Obtaining P(A={a},GRE={gre},GPA={gpa}|R={r})")
-    return ans
-
-
-
-def p_r_gre(dataset,r,gre,tabs):
-    tabs +=1
-    # P(GRE=gre,R=r) with gre in {0,1}, r in {1,2,3,4} and P(g,r) from dataset
-    print(f"{t_text(tabs=tabs)}Obtaining P(GRE={gre},R={r})")
-    ans = p_general(dataset, gres=[gre], rs=[r], tabs=tabs)
-    print(f"{t_text(tabs=tabs)}P(GRE={gre},R={r}) = {ans}")
-    return ans
-
-
-def p_r(dataset,r, tabs=0):
-    # P(R=r) from dataset
-    print(f"{t_text(tabs=tabs)}Obtaining P(R={r})")
-    ans = p_with_general(dataset,rs=[r],tabs=tabs+1)
-    print(f"{t_text(tabs)}P(R={r}) from dataset = {ans}")
-    return ans
-
-
-def p_gre_with_r(dataset,r,gre,tabs):
-    # P(GRE=g|R=r) from table
-    print(f"{t_text(tabs=tabs)}Obtaining P(GRE={gre}|R={r})")
-    ans = p_with_general(dataset,gres=[gre],rs=[r],tabs=tabs)
-    print(f"{t_text(tabs)}P(GRE={gre}|R={r}) = {ans} from dataset")
-    return ans
-
-
-def p_r_gpa(dataset,r, gpa, tabs):
-    tabs += 1
-    print(f"{t_text(tabs=tabs)}Obtaining P(GPA={gpa},R={r})")
-    # P(GPA=gpa,R=r) with gpa in {0,1}, r in {1,2,3,4} and P(gpa,r) from dataset
-    return p_general(dataset, gpas=[gpa], rs=[r],tabs=tabs)
-
-
-def p_gpa_with_r(dataset,r,gpa, tabs):
-    # P(GRE=g|R=r) from table
-    print(f"{t_text(tabs=tabs)}Obtaining P(GPA={gpa}|R={r})")
-    ans = p_with_general(dataset, gpas=[gpa], rs=[r], tabs= tabs+1)
-    print(f"{t_text(tabs)}P(GPA={gpa}|R={r}) = {ans} from dataset")
-    return ans
-
-
-def p_a_with_r(dataset,a,r,tabs=0):
-    print(f"{t_text(tabs=tabs)}Obtaining P(A={a}|R={r})")
-    # P(A=a,R=r) = P(A=a|GRE,GPA,R=r) * P(R=r)
-    # P(A=a|R=r) = P(A=a,R=r) / P(R=r)
-    a_r = p_a_r(dataset, a=a, r=r, tabs=tabs+1)
-    r_ = p_r(dataset,r=r, tabs=tabs+1)
-    ans = a_r / r_
-    #print("P(A=a,R=r) = P(A=a|GRE,GPA,R=r) * P(R=r)")
-    print(f"{t_text(tabs)}P(A={a}|R={r}) = P(A={a},R={r}) / P(R={r}) = {a_r} / {r_}) = {ans}")
-    return ans
-
-
-def p_a_r(dataset,a,r,tabs):
-    return p_general(dataset,aas=[a], rs=[r], tabs=tabs)
-
-def ex_a(dataset):
-    # P(a=0|R=1) = P(a=0,R=1) / P(R=1)
-    ans = p_a_with_r(dataset,a=0,r=1,tabs=0)
-    print(ans)
-    return ans
-
-
-def ex_b(dataset):
-    # 4.b P(a=1|R=2,gre=0,gpa=1)
-    ans = p_a_with_r_gre_gpa(dataset,a=1,r=2,gre=0,gpa=1)
-    print(ans)
-    return ans
+def ex_b(a=1,r=2,gre=0,gpa=1):
+    key = f'P(A={a}|GRE={gre},GPA={gpa},R={r})'
+    print(f"Ex b => {key} = {TABLE[key]}")
 
 @click.command(name="e1_4")
 @click.option("--data-filepath", default=DATA_FILEPATH_DEFAULT)
 def main(data_filepath):
     dataset = get_dataset(data_filepath)
-    # Laplace correction
     dataset = dataset.append(
-        [{"admit": a, "gre": gre, "gpa": gpa, "rank": r} for a in [0, 1] for gre in [0, 1] for gpa in [0, 1] for r in
-         range(1, 5)])
+        [{"admit": a, "gre": gre, "gpa": gpa, "rank": r} for a in AS for gre in GRES for gpa in GPAS for r in RS])
     dataset = dataset.groupby(dataset.columns.tolist(),as_index=False).size()
+    # TO apply Laplace correction comment next line
+    # dataset[1] = dataset[1] - 1
     # The graph is      rank
     #           gre <----┘|└----> gpa
     #            |        v        |
@@ -184,9 +161,9 @@ def main(data_filepath):
     #p_a_with_r_gre_gpa(dataset,0,1,0,0)
     #p_a_with_r_gre_gpa(dataset,1,1,0,0)
 
-
-    ex_a(dataset)
-    o = 5
+    complete_table(dataset)
+    ex_a()
+    ex_b()
 
 
 if __name__ == '__main__':
