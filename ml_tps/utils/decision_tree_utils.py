@@ -1,16 +1,32 @@
 import pandas
+import numpy as np
+
 from ml_tps.utils.probability_utils import relative_frequency as fr
+from ml_tps.utils.dataframe_utils import subdateframe
 
 class DecisionTree:
 
-    def __init__(self, dataset: pandas.DataFrame, nodes: int = None, variables: int = None):
-        pass
+    def __init__(self, dataset: pandas.DataFrame, objective:str, nodes: int = None, variables: int = None):
+        self.root = generate_subtree(dataset, objective)
+        assa=4
 
     def classify(self, case):
         pass
 
     def plot(self):
         pass
+
+
+def generate_subtree(dataset: pandas.DataFrame, objective: str):
+    classes = list(dataset.keys())
+    classes.remove(objective)
+    if len(dataset[objective].unique()) == 1:
+        return dataset[objective].unique()
+    gain_list = np.array([gain(dataset=dataset,attribute=attr,objective=objective) for attr in classes])
+    winner = classes[np.where(gain_list == np.amax(gain_list))[0][0]]
+    values = dataset[winner].unique()
+    subnodes = [generate_subtree(dataset=subdateframe(dataset,winner,v), objective=objective) for v in values]
+    return (winner,dict(zip(values,subnodes)))
 
 
 def shannon_entropy(dataset: pandas.DataFrame, objective: str):
@@ -26,7 +42,6 @@ def shannon_entropy(dataset: pandas.DataFrame, objective: str):
     return sum([f(x) for x in frs.values()])
 
 
-
 def sv(dataset: pandas.DataFrame, attribute: str, value) -> pandas.DataFrame:
     return dataset[dataset[attribute] == value]
 
@@ -37,13 +52,25 @@ def gain(dataset: pandas.DataFrame, attribute: str, objective: str):
     return general_entropy - sum(len(_sv) / len(dataset) * shannon_entropy(_sv,objective) for _sv in svs)
 
 
+def pour_titanic_dataset(dataset: pandas.DataFrame):
+    dataset["Cabin"] = dataset["Cabin"].fillna("NAN")
+    dataset["Embarked"] = dataset["Embarked"].fillna("NAN")
+    dataset["Age"] = dataset["Age"].fillna(dataset["Age"].dropna().mean())
+    dataset = dataset.drop("PassengerId", axis=1)
+    dataset = dataset.drop("Name", axis=1)
+    return dataset
+
+
 if __name__ == '__main__':
     import os
     dir_path = os.path.dirname(os.path.realpath(__file__))
     DATA_FILEPATH_DEFAULT = f"{dir_path}/../tp2/data/tennis.tsv"
     dataset = pandas.read_csv(DATA_FILEPATH_DEFAULT,sep="\t")
-    shannon_entropy(dataset=dataset, objective="Juega")
-    aa = sv(dataset,"Viento","weak")
-    shannon_entropy(dataset=aa, objective="Juega")
-    ggg = gain(dataset,"Viento", "Juega")
+    dataset = dataset.drop("Day", axis=1)
+    d = DecisionTree(dataset,"Juega")
+
+    DATA_FILEPATH_DEFAULT2 = f"{dir_path}/../tp2/data/titanic.csv"
+    dataset2 = pandas.read_csv(DATA_FILEPATH_DEFAULT2,sep="\t")
+    dataset2 = pour_titanic_dataset(dataset2)
+    d2 = DecisionTree(dataset2,"Survived")
     asd = 5
