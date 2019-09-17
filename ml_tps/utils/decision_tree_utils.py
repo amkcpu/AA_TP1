@@ -11,9 +11,11 @@ class DecisionTree:
         self.root = generate_subtree(dataset, objective)
         assa = 4
 
+    # TODO
     def classify(self, case):
         pass
 
+    # TODO
     def plot(self):
         pass
 
