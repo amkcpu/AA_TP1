@@ -6,4 +6,3 @@
 # c) Apply KNN and Weighted-distances KNN to predict review ratings (stars)
     # k = 5
 # d) Calculate classifier precision and confusion matrix
-# e) [SAME AS a)???]
