@@ -19,6 +19,8 @@ class DecisionTree:
 
 def generate_subtree(dataset: pandas.DataFrame, objective: str):
     classes = list(dataset.keys())
+    if len(classes) == 1:
+        return dataset[objective].mode()[0]
     classes.remove(objective)
     if len(dataset[objective].unique()) == 1:
         return dataset[objective].unique()
@@ -53,11 +55,10 @@ def gain(dataset: pandas.DataFrame, attribute: str, objective: str):
 
 
 def pour_titanic_dataset(dataset: pandas.DataFrame):
-    dataset["Cabin"] = dataset["Cabin"].fillna("NAN")
-    dataset["Embarked"] = dataset["Embarked"].fillna("NAN")
+    dataset = dataset[["Pclass", "Survived", "Sex", "Age"]]
+
     dataset["Age"] = dataset["Age"].fillna(dataset["Age"].dropna().mean())
-    dataset = dataset.drop("PassengerId", axis=1)
-    dataset = dataset.drop("Name", axis=1)
+
     return dataset
 
 
