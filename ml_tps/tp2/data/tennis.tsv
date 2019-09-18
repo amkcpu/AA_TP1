@@ -1,0 +1,15 @@
+Day	Whether	Temperatura	Humedad	Viento	Juega
+D1	soleado	warm	alta	weak	0
+D2	soleado	warm	alta	fuerte	0
+D3	nublado	warm	alta	weak	1
+D4	lluvioso	templado	alta	weak	1
+D5	lluvioso	cold	normal	weak	1
+D6	lluvioso	cold	normal	fuerte	0
+D7	nublado	cold	normal	fuerte	1
+D8	soleado	templado	alta	weak	0
+D9	soleado	cold	normal	weak	1
+D10	lluvioso	templado	normal	weak	1
+D11	soleado	templado	normal	fuerte	1
+D12	nublado	templado	alta	fuerte	1
+D13	nublado	warm	normal	weak	1
+D14	lluvioso	templado	alta	fuerte	0
