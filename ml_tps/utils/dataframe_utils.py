@@ -18,8 +18,8 @@ def divide_in_training_test_datasets(dataset: pd.DataFrame, train_pctg: float = 
     np.random.shuffle(indexes)
     indexes = list(indexes)
     split_index = int(np.floor(len(dataset) * train_pctg))
-    train = pd.DataFrame([dataset.iloc[i] for i in indexes[split_index:]])
-    test = pd.DataFrame([dataset.iloc[i] for i in indexes[:split_index]])
+    train = pd.DataFrame([dataset.iloc[i] for i in indexes[:split_index]])
+    test = pd.DataFrame([dataset.iloc[i] for i in indexes[split_index:]])
     return train, test
 
 # Rewrite negatives and positives to 0 and 1
