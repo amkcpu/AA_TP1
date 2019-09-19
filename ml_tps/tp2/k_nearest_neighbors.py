@@ -22,10 +22,14 @@ def euclideanDistance(x1: pd.Series, x2: pd.Series):
     return sum(np.sqrt(np.square(x1 - x2)))
 
 
+def dropObjectiveColumn(training_set: pd.DataFrame, objective: str):
+    training_set_copy = training_set.copy()     # so we don't change original
+    del training_set_copy[objective]
+    return training_set_copy
+
+
 def getNearestNeighbors(example: pd.Series, training_set: pd.DataFrame, objective: str, k: int):
-    # Drop objective column
-    training_set_values = training_set.copy()
-    del training_set_values[objective]
+    training_set_values = dropObjectiveColumn(training_set, objective)
 
     # Transpose training set & set example columns to have correct subtraction
     example.index = training_set_values.columns

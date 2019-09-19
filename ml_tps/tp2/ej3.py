@@ -6,7 +6,7 @@ import numbers
 import math
 
 from ml_tps.tp2.k_nearest_neighbors import knn
-from ml_tps.utils.evaluation_utils import confusion_matrix
+from ml_tps.utils.evaluation_utils import *
 from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, rewritePositivesNegatives, deleteNonNumericColumns
 
 DEFAULT_FILEPATH = "data/reviews_sentiment.csv"
@@ -41,8 +41,14 @@ def main():
         i += 1
 
     # ========== d) Calculate classifier precision and confusion matrix
-    confusionMatrix = confusion_matrix(predicted_ratings, evaluation_set[DEFAULT_OBJECTIVE])
-
+    orig_ratings = evaluation_set[DEFAULT_OBJECTIVE]
+    confusion_matrix = getConfusionMatrix(predicted_ratings, orig_ratings)
+    accuracy = computeAccuracy(predicted_ratings, orig_ratings)
+    true_positive_rate = computeTruePositiveRate(predicted_ratings, orig_ratings)
+    false_positive_rate = computeFalsePositiveRate(predicted_ratings, orig_ratings)
+    precision = computePrecision(predicted_ratings, orig_ratings)
+    recall = true_positive_rate
+    f1 = f1_score(precision, recall)
 
     # ============== Final printout ==============
     print("========== Data info ==========")
@@ -53,16 +59,15 @@ def main():
     print("\n========== Ejercicio a) ==========")
     print("Mean no. of words of 1-star-reviews:", one_star_review_mean_words)
 
-    print("\n========== Evaluation metrics KNN ==========")
-    '''
+    print("\n\n========== Evaluation metrics KNN ==========")
     print("Accuracy: ", accuracy, "\n")
-    print("Confusion matrix:", confusion_matrix)
-    print("\nTrue positive rate (TP): ", true_positive_rate)
+
+    print("Confusion matrix:\n", confusion_matrix)
+
+    print("\nTrue positive rate (TP) (= Recall): ", true_positive_rate)
     print("False positive rate (FP): ", false_positive_rate)
     print("Precision: ", precision)
-    print("Recall (= true positive rate): ", recall)
     print("F1-score: ", f1)
-    '''
 
     a = 1
 
