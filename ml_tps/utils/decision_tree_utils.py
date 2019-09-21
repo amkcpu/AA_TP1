@@ -98,8 +98,11 @@ def gain(dataset: pd.DataFrame, attribute: str, objective: str):
 def pour_titanic_dataset(dataset: pd.DataFrame):
     dataset = dataset[["Pclass", "Survived", "Sex", "Age"]]
 
-    dataset["Age"] = dataset["Age"].fillna(dataset["Age"].dropna().mean())
-    #dataset["Age"] = dataset.apply(lambda x: 1 if x["Age"] >= 3 else 0,axis=1)
+    dataset["Age"] = dataset["Age"].fillna(-1)
+    bins = (-2, 0, 5, 12, 120)
+    group_names = ['Unknown', 'Baby', 'Child', 'Adult']
+    categories = pd.cut(dataset["Age"], bins, labels=group_names)
+    dataset["Age"] = categories
 
     return dataset
 
@@ -118,5 +121,7 @@ if __name__ == '__main__':
     dataset2 = pour_titanic_dataset(dataset2)
     d2 = DecisionTree(dataset2, "Survived")
     asd = 5
+
+    d2.plot()
 
     #
