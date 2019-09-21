@@ -2,26 +2,15 @@ import pandas as pd
 import numpy as np
 
 
-# F1-score
-def f1_score(precision, recall):
-    f1 = 2 * (precision * recall) / (precision + recall)
-    return f1
-
-
-# TODO this actually contains an error occurring in small validation samples,
-#  whereby some categories might not be predicted and the confusion matrix might
-#  not by square. An error gets thrown when initializing confusion_matrix_diag, but
-#  already the confusion_matrix itself is faulty.
-#  Using a large sample, this problem is avoided.
 def getConfusionMatrix(predictions: pd.Series, actual: pd.Series):
     if len(predictions) != len(actual):
-        raise ValueError("Number of predictions and number of actual objective values mismatch.")
+        raise ValueError("Mismatch between number of predictions and number of actual objective values.")
 
-    actual.index = predictions.index        # so indices are equal
-    return pd.crosstab(predictions,
-                       actual,
-                       rownames=['Actual'],
-                       colnames=['Predicted'],
+    predictions.index = actual.index        # so indices are equal
+    return pd.crosstab(actual,
+                       predictions,
+                       rownames=['Predicted'],
+                       colnames=['Actual'],
                        dropna=False)
 
 
@@ -35,43 +24,55 @@ def computeAccuracy(predictions: pd.Series, actual: pd.Series):
     return confusion_matrix_diag.sum() / confusion_matrix.sum().sum()
 
 
+# Returns parameters as vectors with entry for each objective class
+def getEvaluationParameters(predictions: pd.Series, actual: pd.Series, as_vector_per_class: bool):
+    confusion_matrix = getConfusionMatrix(predictions, actual)
+    confusion_matrix_diag = getConfusionMatrixDiag(confusion_matrix)
+
+    FP = confusion_matrix.sum(axis=1) - confusion_matrix_diag
+    FN = confusion_matrix.sum(axis=0) - confusion_matrix_diag
+    TP = confusion_matrix_diag
+    # TODO Fix TN
+    #  TN for each class is the sum of all values of the confusion matrix excluding that class's row and column
+    TN = confusion_matrix.sum(axis=0) - confusion_matrix.sum(axis=0) - confusion_matrix.sum(axis=1)
+    # TN = confusion_matrix.sum() - (FP + FN + TP)
+
+    if not as_vector_per_class:
+        FP = FP.sum() / len(confusion_matrix_diag)
+        FN = FN.sum() / len(confusion_matrix_diag)
+        TP = TP.sum() / len(confusion_matrix_diag)
+        TN = TN.sum() / len(confusion_matrix_diag)
+
+    return FP, FN, TP, TN
+
+
+def computeRecall(predictions: pd.Series, actual: pd.Series):
+    return computeTruePositiveRate(predictions, actual)
+
+
+# TPR = sum(True positives)/sum(Condition positive)
 def computeTruePositiveRate(predictions: pd.Series, actual: pd.Series):
-    confusion_matrix = getConfusionMatrix(predictions, actual)
-    confusion_matrix_diag = getConfusionMatrixDiag(confusion_matrix)
+    FP, FN, TP, TN = getEvaluationParameters(predictions, actual, False)
 
-    true_positive_rate = 0
-    for i in range(0, len(confusion_matrix_diag)):
-        column_sum = confusion_matrix.iloc[:, i].sum()  # amount of examples actually in category
-        classified_correctly = confusion_matrix_diag.iloc[i]
-
-        true_positive_rate += classified_correctly / column_sum
-
-    return true_positive_rate / len(confusion_matrix_diag)  # for average
+    condition_positive = TP + FN
+    return TP / condition_positive
 
 
-# TODO Check if correct
+# FPR = sum(False positives)/sum(Condition negative)
 def computeFalsePositiveRate(predictions: pd.Series, actual: pd.Series):
-    confusion_matrix = getConfusionMatrix(predictions, actual)
-    confusion_matrix_diag = getConfusionMatrixDiag(confusion_matrix)
+    FP, FN, TP, TN = getEvaluationParameters(predictions, actual, False)
 
-    false_positive_rate = 0
-
-    for i in range(0, len(confusion_matrix_diag)):
-        column_sum = confusion_matrix.iloc[:, i].sum()  # amount of examples actually in category
-        classified_correctly = confusion_matrix_diag.iloc[i]
-        classified_incorrectly = column_sum - classified_correctly
-
-        false_positive_rate += classified_incorrectly / column_sum
-
-    return false_positive_rate / len(confusion_matrix_diag)  # for average
+    condition_negative = FP + TN
+    return FP / condition_negative
 
 
 def computePrecision(predictions: pd.Series, actual: pd.Series):
-    confusion_matrix = getConfusionMatrix(predictions, actual)
-    confusion_matrix_diag = getConfusionMatrixDiag(confusion_matrix)
+    FP, FN, TP, TN = getEvaluationParameters(predictions, actual, False)
 
-    precision = 0
-    for i in range(0, len(confusion_matrix_diag)):
-        precision += confusion_matrix_diag.iloc[i] / confusion_matrix.iloc[i, :].sum()
+    predicted_positive = TP + FP
+    return TP / predicted_positive
 
-    return precision / len(confusion_matrix_diag)  # for average
+
+def f1_score(precision, recall):
+    f1 = (2 * (precision * recall)) / (precision + recall)
+    return f1

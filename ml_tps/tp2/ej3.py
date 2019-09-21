@@ -1,13 +1,9 @@
 # Trabajo practico 2 - Ejercicio 3
 
-import pandas as pd
-import numpy as np
-import numbers
-import math
-
 from ml_tps.tp2.k_nearest_neighbors import knn
 from ml_tps.utils.evaluation_utils import *
-from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, rewritePositivesNegatives, deleteNonNumericColumns
+from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, \
+    rewritePositivesNegatives, deleteNonNumericColumns
 
 DEFAULT_FILEPATH = "data/reviews_sentiment.csv"
 DEFAULT_K = 5
@@ -43,11 +39,15 @@ def main():
     # ========== d) Calculate classifier precision and confusion matrix
     orig_ratings = evaluation_set[DEFAULT_OBJECTIVE]
     confusion_matrix = getConfusionMatrix(predicted_ratings, orig_ratings)
+
     accuracy = computeAccuracy(predicted_ratings, orig_ratings)
+
     true_positive_rate = computeTruePositiveRate(predicted_ratings, orig_ratings)
     false_positive_rate = computeFalsePositiveRate(predicted_ratings, orig_ratings)
+
     precision = computePrecision(predicted_ratings, orig_ratings)
-    recall = true_positive_rate
+    recall = computePrecision(predicted_ratings, orig_ratings)
+
     f1 = f1_score(precision, recall)
 
     # ============== Final printout ==============
