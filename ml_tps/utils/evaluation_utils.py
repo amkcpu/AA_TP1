@@ -21,9 +21,11 @@ def getConfusionMatrixDiag(confusion_matrix: pd.DataFrame):
 def computeAccuracy(predictions: pd.Series, actual: pd.Series):
     confusion_matrix = getConfusionMatrix(predictions, actual)
     confusion_matrix_diag = getConfusionMatrixDiag(confusion_matrix)
+
     return confusion_matrix_diag.sum() / confusion_matrix.sum().sum()
 
 
+# TODO Fix TN and assure correctness in multi-class applications
 # Returns parameters as vectors with entry for each objective class
 def getEvaluationParameters(predictions: pd.Series, actual: pd.Series, as_vector_per_class: bool):
     confusion_matrix = getConfusionMatrix(predictions, actual)
@@ -32,9 +34,8 @@ def getEvaluationParameters(predictions: pd.Series, actual: pd.Series, as_vector
     FP = confusion_matrix.sum(axis=1) - confusion_matrix_diag
     FN = confusion_matrix.sum(axis=0) - confusion_matrix_diag
     TP = confusion_matrix_diag
-    # TODO Fix TN
-    #  TN for each class is the sum of all values of the confusion matrix excluding that class's row and column
-    TN = confusion_matrix.sum(axis=0) - confusion_matrix.sum(axis=0) - confusion_matrix.sum(axis=1)
+    # TN for each class is the sum of all values of the confusion matrix excluding that class's row and column
+    TN = confusion_matrix.sum().sum() - confusion_matrix.sum(axis=0) - confusion_matrix.sum(axis=1)
     # TN = confusion_matrix.sum() - (FP + FN + TP)
 
     if not as_vector_per_class:
@@ -51,26 +52,51 @@ def computeRecall(predictions: pd.Series, actual: pd.Series):
 
 
 # TPR = sum(True positives)/sum(Condition positive)
-def computeTruePositiveRate(predictions: pd.Series, actual: pd.Series):
-    FP, FN, TP, TN = getEvaluationParameters(predictions, actual, False)
+def computeTruePositiveRate(predictions: pd.Series, actual: pd.Series, averaged: bool = True):
+    confusion_matrix = getConfusionMatrix(predictions, actual)
+    confusion_matrix_diag = getConfusionMatrixDiag(confusion_matrix)
 
-    condition_positive = TP + FN
-    return TP / condition_positive
+    tpr = confusion_matrix_diag / confusion_matrix.sum(axis=0)
+
+    if averaged:
+        tpr = tpr.sum() / len(confusion_matrix_diag)
+
+    return tpr
 
 
 # FPR = sum(False positives)/sum(Condition negative)
-def computeFalsePositiveRate(predictions: pd.Series, actual: pd.Series):
+# TODO Fix computation of False Positive Rate
+def computeFalsePositiveRate(predictions: pd.Series, actual: pd.Series, averaged: bool = True):
+    confusion_matrix = getConfusionMatrix(predictions, actual)
+    confusion_matrix_diag = getConfusionMatrixDiag(confusion_matrix)
+
+    false_positive_rate = 0
+    for i in range(0, len(confusion_matrix_diag)):
+        column_sum = confusion_matrix.iloc[:, i].sum()  # amount of examples actually in category
+        classified_correctly = confusion_matrix_diag.iloc.iloc[i]
+        classified_incorrectly = column_sum - classified_correctly
+
+        false_positive_rate += classified_incorrectly / column_sum
+    false_positive_rate /= len(confusion_matrix_diag)  # for average
+
+    print("FPR (calc) = ", false_positive_rate)
+
     FP, FN, TP, TN = getEvaluationParameters(predictions, actual, False)
 
     condition_negative = FP + TN
     return FP / condition_negative
 
 
-def computePrecision(predictions: pd.Series, actual: pd.Series):
-    FP, FN, TP, TN = getEvaluationParameters(predictions, actual, False)
+def computePrecision(predictions: pd.Series, actual: pd.Series, averaged: bool = True):
+    confusion_matrix = getConfusionMatrix(predictions, actual)
+    confusion_matrix_diag = getConfusionMatrixDiag(confusion_matrix)
 
-    predicted_positive = TP + FP
-    return TP / predicted_positive
+    precision = confusion_matrix_diag / confusion_matrix.sum(axis=1)
+
+    if averaged:
+        precision = precision.sum() / len(confusion_matrix_diag)
+
+    return precision
 
 
 def f1_score(precision, recall):

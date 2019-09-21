@@ -7,6 +7,7 @@ from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, \
 
 DEFAULT_FILEPATH = "data/reviews_sentiment.csv"
 DEFAULT_K = 5
+DEFAULT_TRAINING_SET_SIZE_PCTG = 0.6
 DEFAULT_OBJECTIVE = "Star Rating"
 
 
@@ -23,7 +24,8 @@ def main():
     one_star_review_mean_words = sum(one_star_ratings["wordcount"]) / len(one_star_ratings)
 
     # ========== b) Divide data set into two parts, training and evaluation set
-    training_set, evaluation_set = divide_in_training_test_datasets(dataset, 0.6)
+    train_pctg = DEFAULT_TRAINING_SET_SIZE_PCTG
+    training_set, evaluation_set = divide_in_training_test_datasets(dataset, train_pctg)
 
     # ========== c) Apply KNN and Weighted-distances KNN to predict review ratings (stars)
     # DEFAULT_K = 5, DEFAULT_OBJECTIVE = "Star Rating"
@@ -43,10 +45,10 @@ def main():
     accuracy = computeAccuracy(predicted_ratings, orig_ratings)
 
     true_positive_rate = computeTruePositiveRate(predicted_ratings, orig_ratings)
-    false_positive_rate = computeFalsePositiveRate(predicted_ratings, orig_ratings)
+    # false_positive_rate = computeFalsePositiveRate(predicted_ratings, orig_ratings)
 
     precision = computePrecision(predicted_ratings, orig_ratings)
-    recall = computePrecision(predicted_ratings, orig_ratings)
+    recall = computeRecall(predicted_ratings, orig_ratings)
 
     f1 = f1_score(precision, recall)
 
@@ -55,6 +57,7 @@ def main():
     print("Data set dimensions: ", dataset.shape)
     print("Training set dimensions: ", training_set.shape)
     print("Evaluation set dimensions: ", evaluation_set.shape)
+    print("Percentage of data set used for training: ", train_pctg)
 
     print("\n========== Ejercicio a) ==========")
     print("Mean no. of words of 1-star-reviews:", one_star_review_mean_words)
@@ -65,8 +68,9 @@ def main():
     print("Confusion matrix:\n", confusion_matrix)
 
     print("\nTrue positive rate (TP) (= Recall): ", true_positive_rate)
-    print("False positive rate (FP): ", false_positive_rate)
+    # print("False positive rate (FP): ", false_positive_rate)  TODO needs fixing in evaluation_utils.py
     print("Precision: ", precision)
+    print("Recall: ", recall)
     print("F1-score: ", f1)
 
     a = 1
