@@ -38,7 +38,7 @@ class DecisionTree:
             for edge in self.descendant_edges:
                 if edge.value == case[self.label]:
                     return edge.descendant.classify(case)
-            raise ValueError("Invalid case")
+            return "-1"
 
     class Edge:
         def __init__(self, value, descendant):
@@ -130,9 +130,14 @@ if __name__ == '__main__':
     DATA_FILEPATH_DEFAULT2 = f"{dir_path}/../tp2/data/titanic.csv"
     dataset2 = pd.read_csv(DATA_FILEPATH_DEFAULT2, sep="\t")
     dataset2 = pour_titanic_dataset(dataset2)
-    d2 = DecisionTree(dataset2, "Survived")
-    asd = 5
+    from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets
+    from ml_tps.utils.probability_utils import confussion_matrix
 
+    dataset2train, dataset2test = divide_in_training_test_datasets(dataset2,0.5)
+    d2 = DecisionTree(dataset2train, "Survived")
+    c_mat = confussion_matrix(d2,dataset2test,'Survived')
+
+    asd = 5
     d2.plot()
 
     #

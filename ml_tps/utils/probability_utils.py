@@ -1,3 +1,4 @@
+import pandas as pd
 import numpy as np
 
 def control_probability(value):
@@ -13,3 +14,11 @@ def relative_frequency(array: np.ndarray):
     for k, v in absolute_frequency(array).items():
         rel_frequency[k] = v / array.size
     return rel_frequency
+
+def confussion_matrix(classifier, test_dataset: pd.DataFrame, objective: str):
+    mat = pd.DataFrame({"0": [0, 0], "1": [0, 0], "-1": [0, 0]})
+    for case in test_dataset.iterrows():
+        case = case[1]
+        ans = classifier.classify(case)
+        mat.loc[case[objective]][ans] += 1
+    return mat
