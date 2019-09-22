@@ -45,8 +45,14 @@ class DecisionTree:
             self.value: str = value
             self.descendant: DecisionTree.Node = descendant
 
-    def __init__(self, dataset: pd.DataFrame, objective: str, nodes: int = None, variables: int = None):
-        self.root = generate_subtree(dataset, objective, gain_f=gini)
+    def __init__(self, dataset: pd.DataFrame, objective: str, gain_f: str = "shannon",
+                 nodes: int = None, variables: int = None):
+        if gain_f.lower() == "gini":
+            gain_function = gini
+        else:
+            gain_function = shannon_entropy
+
+        self.root = generate_subtree(dataset, objective, gain_f=gain_function)
         self.digraph = self.generate_digraph()
 
     def classify(self, case: pd.Series):
