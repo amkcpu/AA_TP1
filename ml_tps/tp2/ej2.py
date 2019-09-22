@@ -30,17 +30,13 @@ def pour_titanic_dataset(dataset: pd.DataFrame):
 
 def main():
     objective = DEFAULT_OBJECTIVE
-    drop_extra_indexing_column = True
-    extra_index_column_title = "PassengerId"
+    training_percentage = DEFAULT_TRAIN_PCTG
 
     dataset = pd.read_csv(DEFAULT_FILEPATH, sep="\t")
     dataset = pour_titanic_dataset(dataset)
-    
-    if drop_extra_indexing_column:
-        del dataset[extra_index_column_title]   # Drop extra indexing column because of lacking value to classification
 
     # =========== a) Divide data set in two parts, training and evaluation set
-    train, test = divide_in_training_test_datasets(dataset, train_pctg=DEFAULT_TRAIN_PCTG)
+    train, test = divide_in_training_test_datasets(dataset, train_pctg=training_percentage)
 
     # =========== b) Decision tree using Shannon entropy
     decision_tree = DecisionTree(train, objective=objective, gain_f="shannon")
@@ -51,6 +47,8 @@ def main():
     decision_tree_gini.plot()
 
     # =========== d) Random forest for b) and c)
+
+
     # =========== e) Confusion matrix for b), c), d).1 and d).2
     # =========== f) Graph precision of decision tree vs. no. of nodes for each case
 
