@@ -32,6 +32,14 @@ class DecisionTree:
                 print(f"{self.label} -> {edge}")
                 digraph.edge(tail_name=self.name, head_name=edge.descendant.name, label=str(edge.value))
 
+        def classify(self, case: pd.Series):
+            if len(self.descendant_edges) == 0:
+                return self.label
+            for edge in self.descendant_edges:
+                if edge.value == case[self.label]:
+                    return edge.descendant.classify(case)
+            return "-1"
+
     class Edge:
         def __init__(self, value, descendant):
             self.value: str = value
@@ -47,9 +55,8 @@ class DecisionTree:
         self.root = generate_subtree(dataset, objective, gain_f=gain_function)
         self.digraph = self.generate_digraph()
 
-    # TODO
-    def classify(self, case):
-        pass
+    def classify(self, case: pd.Series):
+        return self.root.classify(case)
 
     def plot(self, save=False):
         self.digraph.render(f'./out/{random_string(8)}.png', view=not save)
