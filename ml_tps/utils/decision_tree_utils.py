@@ -103,35 +103,3 @@ def gain(dataset: pd.DataFrame, gain_f: Callable[[pd.DataFrame, str], float], at
     svs = [sv(dataset, attribute, v) for v in dataset[attribute].unique()]
     general = gain_f(dataset, objective)
     return general - sum(len(_sv) / len(dataset) * gain_f(_sv, objective) for _sv in svs)
-
-
-def pour_titanic_dataset(dataset: pd.DataFrame):
-    dataset = dataset[["Pclass", "Survived", "Sex", "Age"]]
-
-    dataset["Age"] = dataset["Age"].fillna(-1)
-    bins = (-2, 0, 5, 12, 120)
-    group_names = ['Unknown', 'Baby', 'Child', 'Adult']
-    categories = pd.cut(dataset["Age"], bins, labels=group_names)
-    dataset["Age"] = categories
-
-    return dataset
-
-
-if __name__ == '__main__':
-    import os
-
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    DATA_FILEPATH_DEFAULT = f"{dir_path}/../tp2/data/tennis.tsv"
-    dataset = pd.read_csv(DATA_FILEPATH_DEFAULT, sep="\t")
-    dataset = dataset.drop("Day", axis=1)
-    d = DecisionTree(dataset, "Juega")
-
-    DATA_FILEPATH_DEFAULT2 = f"{dir_path}/../tp2/data/titanic.csv"
-    dataset2 = pd.read_csv(DATA_FILEPATH_DEFAULT2, sep="\t")
-    dataset2 = pour_titanic_dataset(dataset2)
-    d2 = DecisionTree(dataset2, "Survived")
-    asd = 5
-
-    d2.plot()
-
-    #

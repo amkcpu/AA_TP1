@@ -15,13 +15,13 @@ def changesDaniel():
 
 def main():
     objective = DEFAULT_OBJECTIVE
-    drop_nro_example_column = True
-    example_column_title = "Nro.Ejemplo"
+    drop_extra_indexing_column = True
+    extra_index_column_title = "Nro.Ejemplo"
 
     dataset = pd.read_csv(DEFAULT_FILEPATH)
 
-    if drop_nro_example_column:
-        del dataset[example_column_title]   # Drop nro. example because of lacking value to classification
+    if drop_extra_indexing_column:
+        del dataset[extra_index_column_title]   # Drop extra indexing column because of lacking value to classification
 
     # =========== EJ1 a) Create and generate Decision Tree ==========
     decision_tree = DecisionTree(dataset[:4], objective, "shannon")    # exclude example (5th example)
