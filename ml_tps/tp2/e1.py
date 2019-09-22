@@ -29,19 +29,16 @@ def main():
     example_column_title = "Nro.Ejemplo"
 
     dataset = pd.read_csv(DEFAULT_FILEPATH)
-    example = pd.Series([5, "Sol", "Calida", "Normal", "Debil", "Calida", "Estable", 0], index=dataset.columns)
-    dataset_with_example = dataset.copy().append(example, ignore_index=True)
 
     if drop_nro_example_column:
         # Drop nro. example
         del dataset[example_column_title]
-        del dataset_with_example[example_column_title]
 
-    decision_tree = DecisionTree(dataset, objective)
+    decision_tree = DecisionTree(dataset[:4], objective)    # exclude example (5th example)
     decision_tree.plot()
 
     # =========== EJ1 b) Add example ==========
-    decision_tree_example_added = DecisionTree(dataset_with_example, objective)
+    decision_tree_example_added = DecisionTree(dataset, objective)
     decision_tree_example_added.plot()
 
     a = 1

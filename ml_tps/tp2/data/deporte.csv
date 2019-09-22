@@ -3,3 +3,4 @@ Nro.Ejemplo,Cielo,Temperatura,Humedad,Viento,Agua,Pronostivo,Disfruta?
 2,Sol,Calida,Alta,Fuerte,Calida,Estable,1
 3,Nublado,Frio,Alta,Fuerte,Calida,Cambiante,0
 4,Sol,Calida,Alta,Fuerte,Fria,Cambiante,1
+5,Sol,Calida,Normal,Debil,Calida,Estable,0
