@@ -19,7 +19,7 @@ def knn(example: pd.Series, training_set: pd.DataFrame, objective: str, k: int, 
 def euclideanDistance(x1: pd.Series, x2: pd.Series):
     if len(x1) != len(x2):
         raise ArithmeticError("Vectors must have same length.")
-    return sum(np.sqrt(np.square(x1 - x2)))
+    return np.sqrt(sum(np.square(x1 - x2)))
 
 
 def dropObjectiveColumn(training_set: pd.DataFrame, objective: str):
