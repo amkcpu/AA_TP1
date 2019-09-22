@@ -9,7 +9,7 @@ from ml_tps.utils.evaluation_utils import f1_score
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DATA_FILEPATH_DEFAULT = f"{dir_path}/data/aa_bayes.tsv"
-TRAINING_PERCENTAGE_DEFAULT = 0.01
+TRAINING_PERCENTAGE_DEFAULT = 0.001
 VALIDATION_AMOUNT_DEFAULT = 50
 
 @click.command("e1_3")
