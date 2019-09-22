@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import pandas as pd
-from typing import List
+from typing import List, Callable
 from graphviz import Digraph
 
 from ml_tps.utils.probability_utils import relative_frequency
@@ -38,7 +38,7 @@ class DecisionTree:
             self.descendant: DecisionTree.Node = descendant
 
     def __init__(self, dataset: pd.DataFrame, objective: str, nodes: int = None, variables: int = None):
-        self.root = generate_subtree(dataset, objective)
+        self.root = generate_subtree(dataset, objective, gain_f=gini)
         self.digraph = self.generate_digraph()
 
     # TODO
@@ -54,7 +54,7 @@ class DecisionTree:
         return dig
 
 
-def generate_subtree(dataset: pd.DataFrame, objective: str):
+def generate_subtree(dataset: pd.DataFrame, objective: str, gain_f: Callable[[pd.DataFrame, str], float]):
     classes = list(dataset.keys())
     if len(classes) == 1:
         return DecisionTree.Node(str(dataset[objective].mode()[0]))
@@ -64,10 +64,10 @@ def generate_subtree(dataset: pd.DataFrame, objective: str):
         return DecisionTree.Node(str(dataset[objective].unique()[0]))
     # TODO: Add other special case (attributes empty): Return tree with one node returning most frequent value
 
-    gain_list = np.array([gain(dataset=dataset, attribute=attr, objective=objective) for attr in classes])
+    gain_list = np.array([gain(dataset=dataset, gain_f=gain_f, attribute=attr, objective=objective) for attr in classes])
     winner = classes[np.where(gain_list == np.amax(gain_list))[0][0]]
     values = dataset[winner].unique()
-    subnodes = [generate_subtree(dataset=subdataframe(dataset, winner, v), objective=objective) for v in values]
+    subnodes = [generate_subtree(dataset=subdataframe(dataset, winner, v), gain_f=gain_f, objective=objective) for v in values]
     node = DecisionTree.Node(winner)
     node.add_descendant_edges(list(zip(values, subnodes)))
     return node
@@ -89,10 +89,14 @@ def sv(dataset: pd.DataFrame, attribute: str, value) -> pd.DataFrame:
     return dataset[dataset[attribute] == value]
 
 
-def gain(dataset: pd.DataFrame, attribute: str, objective: str):
+def gini(dataset: pd.DataFrame, objective: str):
+    return 1 - sum(relative_frequency(dataset[objective]))
+
+
+def gain(dataset: pd.DataFrame, gain_f: Callable[[pd.DataFrame, str], float], attribute: str, objective: str):
     svs = [sv(dataset, attribute, v) for v in dataset[attribute].unique()]
-    general_entropy = shannon_entropy(dataset, objective=objective)
-    return general_entropy - sum(len(_sv) / len(dataset) * shannon_entropy(_sv, objective) for _sv in svs)
+    general = gain_f(dataset, objective)
+    return general - sum(len(_sv) / len(dataset) * gain_f(_sv, objective) for _sv in svs)
 
 
 def pour_titanic_dataset(dataset: pd.DataFrame):
