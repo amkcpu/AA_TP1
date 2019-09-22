@@ -57,8 +57,8 @@ class DecisionTree:
     def classify(self, case: pd.Series):
         return self.root.classify(case)
 
-    def plot(self, save=False):
-        self.digraph.render(f'./out/{random_string(8)}.png', view=not save)
+    def plot(self, name_prefix: str = "", view=True):
+        self.digraph.render(f'./out/DecisionTree_' + name_prefix + '_{random_string(8)}.png', view=view)
 
     def generate_digraph(self):
         dig = Digraph(format='png')
@@ -93,8 +93,8 @@ class RandomForest:
             return "-1"
         return mode_array[0]
 
-    def plot(self, save=False):
-        self.digraph.render(f'./out/{random_string(8)}.png', view=not save)
+    def plot(self, name_prefix: str = "", view=True):
+        self.digraph.render(f'./out/RandomForest_' + name_prefix + '_{random_string(8)}.png', view=view)
 
     def generate_digraph(self):
         dig = Digraph(format='png')

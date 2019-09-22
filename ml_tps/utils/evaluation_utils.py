@@ -7,8 +7,8 @@ def getConfusionMatrix(predictions: pd.Series, actual: pd.Series):
         raise ValueError("Mismatch between number of predictions and number of actual objective values.")
 
     predictions.index = actual.index        # so indices are equal
-    return pd.crosstab(actual,
-                       predictions,
+    return pd.crosstab(index=predictions,
+                       columns=actual,
                        rownames=['Predicted'],
                        colnames=['Actual'],
                        dropna=False)
