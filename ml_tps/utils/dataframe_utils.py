@@ -4,8 +4,8 @@ import pandas as pd
 
 def subdataframe(dataset: pd.DataFrame, attribute: str, value = None):
     if value is None:
-        return [subdataframe(dataset,attribute=attribute,value=value) for value in dataset[attribute].unique()]
-    return dataset[dataset[attribute] == value].drop(attribute,axis=1)
+        return [subdataframe(dataset, attribute=attribute, value=value) for value in dataset[attribute].unique()]
+    return dataset[dataset[attribute] == value].drop(attribute, axis=1)
 
 
 def subdataframe_with_repeated(dataset: pd.DataFrame, size: int):
