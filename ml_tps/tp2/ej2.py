@@ -82,6 +82,7 @@ def main():
     print("Random Forest - Gini:\n", conf_matrix_rf_gini, "\n\n")
 
     # =========== f) Graph precision of decision tree vs. no. of nodes for each case
+    # Realizar gŕafico de curvas de precision del ́arbol en funcion de la cantidad de nodos para cada caso
 
 
     a = 1
