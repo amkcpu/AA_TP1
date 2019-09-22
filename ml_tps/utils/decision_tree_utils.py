@@ -4,9 +4,8 @@ import pandas as pd
 from typing import List, Callable
 from graphviz import Digraph
 
-from ml_tps.utils.probability_utils import relative_frequency
-from ml_tps.utils.dataframe_utils import subdataframe
-
+from ml_tps.utils.probability_utils import relative_frequency, confussion_matrix
+from ml_tps.utils.dataframe_utils import subdataframe, subdataframe_with_repeated, divide_in_training_test_datasets
 from ml_tps.utils.random_utils import random_string
 
 
@@ -64,6 +63,43 @@ class DecisionTree:
     def generate_digraph(self):
         dig = Digraph(format='png')
         self.root.add_to_digraph(dig)
+        return dig
+
+
+class RandomForest:
+
+    def __init__(self, dataset: pd.DataFrame, objective: str, gain_f: str = "shannon",
+                 trees: int = 5, trees_row_pctg: float = 0.9):
+        self.dataset = dataset
+        self.objective = objective
+        self.gain_f = gain_f
+        self.trees = [self._new_tree(trees_row_pctg) for _ in range(trees)]
+        self.digraph = self.generate_digraph()
+
+    def _new_tree(self, trees_row_pctg: float):
+        df = subdataframe_with_repeated(self.dataset, int(len(self.dataset) * trees_row_pctg))
+        return DecisionTree(df, "Survived")
+
+    def gain_function(self, v):
+        if self.gain_f.lower() == "gini" or (self.gain_f.lower() == "random" and np.random.random() < 0.5):
+            return gini
+        else:
+            return shannon_entropy
+
+    def classify(self, case):
+        answers = list(filter(lambda x: x != "-1", [t.classify(case) for t in self.trees]))
+        mode_array = pd.DataFrame(answers).mode()
+        if len(mode_array) != 1:
+            return "-1"
+        return mode_array[0]
+
+    def plot(self, save=False):
+        self.digraph.render(f'./out/{random_string(8)}.png', view=not save)
+
+    def generate_digraph(self):
+        dig = Digraph(format='png')
+        for t in self.trees:
+            t.root.add_to_digraph(dig)
         return dig
 
 
