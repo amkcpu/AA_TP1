@@ -31,9 +31,9 @@ def main():
     dataset = pd.read_csv(DEFAULT_FILEPATH)
 
     if drop_nro_example_column:
-        # Drop nro. example
-        del dataset[example_column_title]
+        del dataset[example_column_title]   # Drop nro. example because of lacking value to classification
 
+    # =========== EJ1 a) Create and generate Decision Tree ==========
     decision_tree = DecisionTree(dataset[:4], objective)    # exclude example (5th example)
     decision_tree.plot()
 
