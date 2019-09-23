@@ -34,7 +34,7 @@ def pour_titanic_dataset(dataset: pd.DataFrame):
 def main():
     objective = DEFAULT_OBJECTIVE
     training_percentage = DEFAULT_TRAIN_PCTG
-    view_trees = False
+    view_trees = True
 
     dataset = pd.read_csv(DEFAULT_FILEPATH, sep="\t")
     dataset = pour_titanic_dataset(dataset)
@@ -103,7 +103,7 @@ def main():
     # =========== f) Graph precision of decision tree vs. no. of nodes for each case
     # Decision tree pruning
     # Graph: Accuracy vs. no of nodes
-        # For ease case: b), c), d).1, d).2
+        # For each case: b), c), d).1, d).2
 
 
     a = 1
