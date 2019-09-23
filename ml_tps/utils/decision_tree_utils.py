@@ -9,21 +9,25 @@ from ml_tps.utils.dataframe_utils import subdataframe, subdataframe_with_repeate
 from ml_tps.utils.random_utils import random_string
 
 
+# TODO
 # find leafs (= nodes that have no children)
     # then add their parent node to branch to be deleted
-def findLeafs(decisionTree: DecisionTree, no_branches_to_be_pruned: int):
-    branch_nodes_to_delete = list()
+def findLeafs(decisionTree: DecisionTree):
+    leafs = list()
 
-    while len(branch_nodes_to_delete) < no_branches_to_be_pruned:
-        node = decisionTree.root
+    node = decisionTree.root
+    for edge in node.descendant_edges:
+        if edge.descendant.descendant_edges is None:
+            leafs = leafs.append(edge.descendant)
+            break
+        else:
+            node = edge.descendant
 
-        for edge in node.descendant_edges:
-            if edge.descendant.descendant_edges is None:
-                leafs = leafs.append(edge.descendant)
-                break
-            else:
-                node = edge.descendant
+    return leafs
 
+
+# TODO
+def getLeafParents(leafs: list) -> pd.Series:
     return
 
 class DecisionTree:
@@ -85,13 +89,15 @@ class DecisionTree:
 
     def prune_tree(self, no_branches_to_be_pruned: int):
         leafs = findLeafs(decisionTree=self, no_branches_to_be_pruned=no_branches_to_be_pruned)
-        # get leafParents (parents of all leafs)
-        # get unique parents
+        leafParents = getLeafParents(leafs)
+        uniqueParents = leafParents.unique()    # without repetitions
+
+        branch_nodes_to_be_pruned = uniqueParents[:no_branches_to_be_pruned]
 
         # find most frequent class for one branch
         branch_values = list()
 
-        for branch_node in branch_nodes_to_delete:
+        for branch_node in branch_nodes_to_be_pruned:
             values_per_node = pd.Series()
 
             i = 0
