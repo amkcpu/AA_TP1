@@ -30,6 +30,25 @@ def findLeafs(decisionTree: DecisionTree):
 def getLeafParents(leafs: list) -> pd.Series:
     return
 
+
+def mostFrequentClass(branch_nodes_to_be_pruned: pd.Series):
+    branch_values = list()
+
+    for branch_node in branch_nodes_to_be_pruned:
+        values_per_node = pd.Series()
+
+        i = 0
+        for edge in branch_node.descendant_edges:
+            values_per_node[0] = edge.descendant.label
+            i += 1
+
+        values_per_node = values_per_node.value_counts()
+        most_frequent_value = values_per_node.iloc[0]
+        branch_values = branch_values.append(most_frequent_value)
+
+    return branch_values
+
+
 class DecisionTree:
 
     class Node:
@@ -95,23 +114,13 @@ class DecisionTree:
         branch_nodes_to_be_pruned = uniqueParents[:no_branches_to_be_pruned]
 
         # find most frequent class for one branch
-        branch_values = list()
-
-        for branch_node in branch_nodes_to_be_pruned:
-            values_per_node = pd.Series()
-
-            i = 0
-            for edge in branch_node.descendant_edges:
-                values_per_node[0] = edge.descendant.label
-                i += 1
-
-            values_per_node = values_per_node.value_counts()
-            most_frequent_value = values_per_node.iloc[0]
-            branch_values = branch_values.append(most_frequent_value)
+        value_per_branch = mostFrequentClass(branch_nodes_to_be_pruned)
 
         # replace all descendant edges of branch_node with one leaf having value of most frequent class
+        for node in branch_nodes_to_be_pruned:
+            prunedTree = deleteNodes(self, node.descendant_edges)   # delete nodes and associated edges
 
-
+        return prunedTree
 
     def no_of_nodes(self):
         no_of_nodes = (self.digraph.body.__len__() + 1) / 2     # len consists of no. nodes and no. edges
