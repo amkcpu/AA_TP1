@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import os
 
-from ml_tps.utils.evaluation_utils import getConfusionMatrix
+from ml_tps.utils.evaluation_utils import getConfusionMatrix, computeAccuracy, evalPreprocessing
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_FILEPATH = f"{dir_path}/../tp2/data/titanic.csv"
@@ -72,17 +72,38 @@ def main():
         i += 1
 
     conf_matrix_dt_shannon = getConfusionMatrix(predictions_dt_shannon, test[objective])
-    conf_matrix_dt_gini = getConfusionMatrix(predictions_dt_gini, test[objective])
-    conf_matrix_rf_shannon = getConfusionMatrix(predictions_rf_shannon, test[objective])
-    conf_matrix_rf_gini = getConfusionMatrix(predictions_rf_gini, test[objective])
+    accuracy_dt_shannon = computeAccuracy(predictions_dt_shannon, test[objective], prediction_labels_to_drop=[-1])
 
-    print("Decision Tree - Shannon:\n", conf_matrix_dt_shannon, "\n\n")
-    print("Decision Tree - Gini:\n", conf_matrix_dt_gini, "\n\n")
-    print("Random Forest - Shannon:\n", conf_matrix_rf_shannon, "\n\n")
-    print("Random Forest - Gini:\n", conf_matrix_rf_gini, "\n\n")
+    conf_matrix_dt_gini = getConfusionMatrix(predictions_dt_gini, test[objective])
+    accuracy_dt_gini = computeAccuracy(predictions_dt_gini, test[objective], prediction_labels_to_drop=[-1])
+
+    conf_matrix_rf_shannon = getConfusionMatrix(predictions_rf_shannon, test[objective])
+    accuracy_rf_shannon = computeAccuracy(predictions_rf_shannon, test[objective], prediction_labels_to_drop=[-1])
+
+    conf_matrix_rf_gini = getConfusionMatrix(predictions_rf_gini, test[objective])
+    accuracy_rf_gini = computeAccuracy(predictions_rf_gini, test[objective], prediction_labels_to_drop=[-1])
+
+    print("\n\n=======================================")
+    print("Decision Tree - Shannon:")
+    print("\tAccuracy = ", accuracy_dt_shannon)
+    print(conf_matrix_dt_shannon, "\n")
+
+    print("Decision Tree - Gini:")
+    print("\tAccuracy = ", accuracy_dt_gini)
+    print(conf_matrix_dt_gini, "\n")
+
+    print("Random Forest - Shannon:")
+    print("\tAccuracy = ", accuracy_rf_shannon)
+    print(conf_matrix_rf_shannon, "\n")
+
+    print("Random Forest - Gini:")
+    print("\tAccuracy = ", accuracy_rf_gini)
+    print(conf_matrix_rf_gini)
 
     # =========== f) Graph precision of decision tree vs. no. of nodes for each case
-    # Realizar gŕafico de curvas de precision del ́arbol en funcion de la cantidad de nodos para cada caso
+    # Decision tree pruning
+    # Graph: Accuracy vs. no of nodes
+        # For ease case: b), c), d).1, d).2
 
 
     a = 1
