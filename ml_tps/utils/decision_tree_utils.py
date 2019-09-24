@@ -9,26 +9,16 @@ from ml_tps.utils.dataframe_utils import subdataframe, subdataframe_with_repeate
 from ml_tps.utils.random_utils import random_string
 
 
-# TODO
-# find leafs (= nodes that have no children)
-    # then add their parent node to branch to be deleted
-def findLeafs(decisionTree: DecisionTree):
-    leafs = list()
-
-    node = decisionTree.root
-    for edge in node.descendant_edges:
-        if edge.descendant.descendant_edges is None:
-            leafs = leafs.append(edge.descendant)
-            break
-        else:
-            node = edge.descendant
-
-    return leafs
+# find leafs (= nodes that have no children) recursively
+def findLeafs(node):
+    if len(node.descendant_edges) == 0:
+        return [node]
+    else:
+        return [item for edge in node.descendant_edges for item in findLeafs(edge.descendant)]
 
 
-# TODO
-def getLeafParents(leafs: list) -> pd.Series:
-    return
+def findLeafParents(node):
+    return [leaf.parent for leaf in findLeafs(node)]
 
 
 # TODO
@@ -53,10 +43,11 @@ def mostFrequentClass(branch_nodes_to_be_pruned: pd.Series):
 class DecisionTree:
 
     class Node:
-        def __init__(self, label: str):
+        def __init__(self, label: str, parent = None):
             self.label = label
             self.name = random_string(25)
             self.descendant_edges: List[DecisionTree.Edge] = []
+            self.parent = parent
 
         def add_descendant_edge(self, value, descendant):
             self.descendant_edges.append(DecisionTree.Edge(value, descendant))
@@ -116,11 +107,10 @@ class DecisionTree:
 
         return predictions
 
-
+    '''
     # TODO
     def prune_tree(self, no_branches_to_be_pruned: int):
-        leafs = findLeafs(decisionTree=self, no_branches_to_be_pruned=no_branches_to_be_pruned)
-        leafParents = getLeafParents(leafs)
+        leafParents = findLeafParents(self.root)
         uniqueParents = leafParents.unique()    # without repetitions
 
         branch_nodes_to_be_pruned = uniqueParents[:no_branches_to_be_pruned]
@@ -134,6 +124,7 @@ class DecisionTree:
                 edge.clear()
 
         return self
+    '''
 
 
     def no_of_nodes(self):
@@ -200,8 +191,9 @@ class RandomForest:
 
         return self
 
-
-def generate_subtree(dataset: pd.DataFrame, objective: str, gain_f: Callable[[pd.DataFrame, str], float]):
+# pass node
+def generate_subtree(dataset: pd.DataFrame, objective: str,
+                     gain_f: Callable[[pd.DataFrame, str], float], parent: DecisionTree.Node = None):
     classes = list(dataset.keys())
     if len(classes) == 1:
         return DecisionTree.Node(str(dataset[objective].mode()[0]))
@@ -214,8 +206,9 @@ def generate_subtree(dataset: pd.DataFrame, objective: str, gain_f: Callable[[pd
     gain_list = np.array([gain(dataset=dataset, gain_f=gain_f, attribute=attr, objective=objective) for attr in classes])
     winner = classes[np.where(gain_list == np.amax(gain_list))[0][0]]
     values = dataset[winner].unique()
-    subnodes = [generate_subtree(dataset=subdataframe(dataset, winner, v), gain_f=gain_f, objective=objective) for v in values]
-    node = DecisionTree.Node(winner)
+    node = DecisionTree.Node(winner, parent)
+    subnodes = [generate_subtree(dataset=subdataframe(dataset, winner, v),
+                                 gain_f=gain_f, objective=objective, parent=node) for v in values]
     node.add_descendant_edges(list(zip(values, subnodes)))
     return node
 
