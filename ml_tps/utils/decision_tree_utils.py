@@ -199,12 +199,12 @@ class RandomForest:
 
     # TODO
     def prune_forest(self, no_branches_to_be_pruned: int):
-
         i = 0
         for tree in self.trees:
             self.trees[i] = DecisionTree.prune_tree(tree, no_branches_to_be_pruned)
             i += 1
 
+        # TODO update digraph
         return self
 
 # pass node
