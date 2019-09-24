@@ -34,7 +34,7 @@ def pour_titanic_dataset(dataset: pd.DataFrame):
 def main():
     objective = DEFAULT_OBJECTIVE
     training_percentage = DEFAULT_TRAIN_PCTG
-    view_trees = True
+    view_trees = False
 
     dataset = pd.read_csv(DEFAULT_FILEPATH, sep="\t")
     dataset = pour_titanic_dataset(dataset)
@@ -44,7 +44,7 @@ def main():
 
     # =========== b) Decision tree using Shannon entropy
     decision_tree_shannon = DecisionTree(train, objective=objective, gain_f="shannon")
-    decision_tree_shannon.plot(name_prefix="Shannon", view=view_trees)
+    decision_tree_shannon.plot(name_prefix="Shannon", view=True)
 
     # =========== c) Decision tree using Gini index
     decision_tree_gini = DecisionTree(train, objective=objective, gain_f="gini")
@@ -94,6 +94,8 @@ def main():
     # Decision tree pruning
     # Graph: Accuracy vs. no of nodes
         # For each case: b), c), d).1, d).2
+
+    pruned_dt_shannon = decision_tree_shannon.prune_tree(2)
     '''
     for no_branches_to_be_pruned in range(1, 5):
         decision_tree_shannon_pruned = decision_tree_shannon.prune_tree(no_branches_to_be_pruned)

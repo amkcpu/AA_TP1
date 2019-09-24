@@ -21,23 +21,20 @@ def findLeafParents(node):
     return [leaf.parent for leaf in findLeafs(node)]
 
 
-# TODO
-def mostFrequentClass(branch_nodes_to_be_pruned: pd.Series):
+def mostFrequentPrediction(branch_nodes_to_be_pruned: list):
     branch_values = list()
 
     for branch_node in branch_nodes_to_be_pruned:
-        values_per_node = pd.Series()
-
-        i = 0
-        for edge in branch_node.descendant_edges:
-            values_per_node[0] = edge.descendant.label
-            i += 1
-
-        values_per_node = values_per_node.value_counts()
-        most_frequent_value = values_per_node.iloc[0]
-        branch_values = branch_values.append(most_frequent_value)
+        leafLabels = [leaf.label for leaf in findLeafs(branch_node)]
+        occurences = pd.Series(leafLabels).value_counts()
+        most_frequent_value = occurences.index[0]
+        branch_values.append(most_frequent_value)
 
     return branch_values
+
+
+def replaceBranch(decisionTree, branchParent, replacementNode):
+
 
 
 class DecisionTree:
@@ -83,7 +80,7 @@ class DecisionTree:
         else:
             gain_function = shannon_entropy
 
-        self.root = generate_subtree(dataset, objective, gain_f=gain_function)
+        self.root = generate_subtree(dataset, objective, gain_f=gain_function, parent=None)
         self.digraph = self.generate_digraph()
 
     def classify(self, case: pd.Series):
@@ -107,24 +104,24 @@ class DecisionTree:
 
         return predictions
 
-    '''
+
     # TODO
     def prune_tree(self, no_branches_to_be_pruned: int):
         leafParents = findLeafParents(self.root)
-        uniqueParents = leafParents.unique()    # without repetitions
+        uniqueParents = list(set(leafParents))    # without repetitions
 
         branch_nodes_to_be_pruned = uniqueParents[:no_branches_to_be_pruned]
 
         # find most frequent class for one branch
-        value_per_branch = mostFrequentClass(branch_nodes_to_be_pruned)
+        value_per_branch = mostFrequentPrediction(branch_nodes_to_be_pruned)
 
         # replace all descendant edges of branch_node with one leaf having value of most frequent class
+        replaceBranch()
         for node in branch_nodes_to_be_pruned:
             for edge in node.descendant_edges:
                 edge.clear()
 
         return self
-    '''
 
 
     def no_of_nodes(self):
@@ -193,14 +190,14 @@ class RandomForest:
 
 # pass node
 def generate_subtree(dataset: pd.DataFrame, objective: str,
-                     gain_f: Callable[[pd.DataFrame, str], float], parent: DecisionTree.Node = None):
+                     gain_f: Callable[[pd.DataFrame, str], float], parent: DecisionTree.Node):
     classes = list(dataset.keys())
     if len(classes) == 1:
-        return DecisionTree.Node(str(dataset[objective].mode()[0]))
+        return DecisionTree.Node(str(dataset[objective].mode()[0]), parent)
     classes.remove(objective)
 
     if len(dataset[objective].unique()) == 1:           # special case: all examples have same value for objective
-        return DecisionTree.Node(str(dataset[objective].unique()[0]))
+        return DecisionTree.Node(str(dataset[objective].unique()[0]), parent)
     # TODO: Add other special case (attributes empty): Return tree with one node returning most frequent value
 
     gain_list = np.array([gain(dataset=dataset, gain_f=gain_f, attribute=attr, objective=objective) for attr in classes])
