@@ -58,29 +58,19 @@ def main():
     random_forest_gini.plot(name_prefix="Gini", view=view_trees)
 
     # =========== e) Confusion matrix for b), c), d).1 and d).2
-    predictions_dt_shannon = pd.Series(np.array(np.zeros(len(test.index), dtype=int)))  # b)
-    predictions_dt_gini = pd.Series(np.array(np.zeros(len(test.index), dtype=int)))     # c)
-    predictions_rf_shannon = pd.Series(np.array(np.zeros(len(test.index), dtype=int)))  # d).1
-    predictions_rf_gini = pd.Series(np.array(np.zeros(len(test.index), dtype=int)))     # d).2
-
-    i = 0
-    for index, case in test.drop(objective, axis=1, inplace=False).iterrows():
-        predictions_dt_shannon[i] = decision_tree_shannon.classify(case)
-        predictions_dt_gini[i] = decision_tree_gini.classify(case)
-        predictions_rf_shannon[i] = random_forest_shannon.classify(case)
-        predictions_rf_gini[i] = random_forest_gini.classify(case)
-        i += 1
+    predictions_dt_shannon = decision_tree_shannon.getPredictions(test, objective)  # b)
+    predictions_dt_gini = decision_tree_gini.getPredictions(test, objective)     # c)
+    predictions_rf_shannon = random_forest_shannon.getPredictions(test, objective)  # d).1
+    predictions_rf_gini = random_forest_gini.getPredictions(test, objective)     # d).2
 
     conf_matrix_dt_shannon = getConfusionMatrix(predictions_dt_shannon, test[objective])
-    accuracy_dt_shannon = computeAccuracy(predictions_dt_shannon, test[objective], prediction_labels_to_drop=[-1])
-
     conf_matrix_dt_gini = getConfusionMatrix(predictions_dt_gini, test[objective])
-    accuracy_dt_gini = computeAccuracy(predictions_dt_gini, test[objective], prediction_labels_to_drop=[-1])
-
     conf_matrix_rf_shannon = getConfusionMatrix(predictions_rf_shannon, test[objective])
-    accuracy_rf_shannon = computeAccuracy(predictions_rf_shannon, test[objective], prediction_labels_to_drop=[-1])
-
     conf_matrix_rf_gini = getConfusionMatrix(predictions_rf_gini, test[objective])
+
+    accuracy_dt_shannon = computeAccuracy(predictions_dt_shannon, test[objective], prediction_labels_to_drop=[-1])
+    accuracy_dt_gini = computeAccuracy(predictions_dt_gini, test[objective], prediction_labels_to_drop=[-1])
+    accuracy_rf_shannon = computeAccuracy(predictions_rf_shannon, test[objective], prediction_labels_to_drop=[-1])
     accuracy_rf_gini = computeAccuracy(predictions_rf_gini, test[objective], prediction_labels_to_drop=[-1])
 
     print("\n\n=======================================")
@@ -104,7 +94,24 @@ def main():
     # Decision tree pruning
     # Graph: Accuracy vs. no of nodes
         # For each case: b), c), d).1, d).2
-
+    '''
+    for no_branches_to_be_pruned in range(1, 5):
+        decision_tree_shannon_pruned = decision_tree_shannon.prune_tree(no_branches_to_be_pruned)
+        decision_tree_gini_pruned = decision_tree_gini.prune_tree(no_branches_to_be_pruned)
+        random_forest_shannon = random_forest_shannon.prune_forest(no_branches_to_be_pruned)
+        random_forest_gini = random_forest_gini.prune_forest(no_branches_to_be_pruned)
+    
+        accuracy_dt_shannon_pruned = computeAccuracy(predictions_dt_shannon, test[objective], prediction_labels_to_drop=[-1])
+        accuracy_dt_gini_pruned = computeAccuracy(predictions_dt_gini, test[objective], prediction_labels_to_drop=[-1])
+        accuracy_rf_shannon_pruned = computeAccuracy(predictions_rf_shannon, test[objective], prediction_labels_to_drop=[-1])
+        accuracy_rf_gini_pruned = computeAccuracy(predictions_rf_gini, test[objective], prediction_labels_to_drop=[-1])
+    
+        get no of nodes for each example
+    
+    collect no of nodes and accuracy
+    
+    plot graph, 4 lines (DT - Shannon; DT - Gini; RF - Shannon; RF - Gini)
+    '''
 
     a = 1
 

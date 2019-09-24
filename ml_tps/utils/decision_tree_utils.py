@@ -31,6 +31,7 @@ def getLeafParents(leafs: list) -> pd.Series:
     return
 
 
+# TODO
 def mostFrequentClass(branch_nodes_to_be_pruned: pd.Series):
     branch_values = list()
 
@@ -105,7 +106,18 @@ class DecisionTree:
         self.root.add_to_digraph(dig)
         return dig
 
+    def getPredictions(self, examples: pd.DataFrame, objective: str):
+        predictions = pd.Series(np.array(np.zeros(len(examples.index), dtype=int)))
 
+        i = 0
+        for index, case in examples.drop(objective, axis=1, inplace=False).iterrows():
+            predictions[i] = self.classify(case)
+            i += 1
+
+        return predictions
+
+
+    # TODO
     def prune_tree(self, no_branches_to_be_pruned: int):
         leafs = findLeafs(decisionTree=self, no_branches_to_be_pruned=no_branches_to_be_pruned)
         leafParents = getLeafParents(leafs)
@@ -118,9 +130,11 @@ class DecisionTree:
 
         # replace all descendant edges of branch_node with one leaf having value of most frequent class
         for node in branch_nodes_to_be_pruned:
-            prunedTree = deleteNodes(self, node.descendant_edges)   # delete nodes and associated edges
+            for edge in node.descendant_edges:
+                edge.clear()
 
-        return prunedTree
+        return self
+
 
     def no_of_nodes(self):
         no_of_nodes = (self.digraph.body.__len__() + 1) / 2     # len consists of no. nodes and no. edges
@@ -163,6 +177,28 @@ class RandomForest:
         for t in self.trees:
             t.root.add_to_digraph(dig)
         return dig
+
+
+    def getPredictions(self, examples: pd.DataFrame, objective: str):
+        predictions = pd.Series(np.array(np.zeros(len(examples.index), dtype=int)))
+
+        i = 0
+        for index, case in examples.drop(objective, axis=1, inplace=False).iterrows():
+            predictions[i] = self.classify(case)
+            i += 1
+
+        return predictions
+
+
+    # TODO
+    def prune_forest(self, no_branches_to_be_pruned: int):
+
+        i = 0
+        for tree in self.trees:
+            self.trees[i] = DecisionTree.prune_tree(tree, no_branches_to_be_pruned)
+            i += 1
+
+        return self
 
 
 def generate_subtree(dataset: pd.DataFrame, objective: str, gain_f: Callable[[pd.DataFrame, str], float]):
