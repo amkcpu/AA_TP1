@@ -56,6 +56,9 @@ class DecisionTree:
                 print(f"{self.label} -> {edge}")
                 digraph.edge(tail_name=self.name, head_name=edge.descendant.name, label=str(edge.value))
 
+        def remove_from_digraph(self, digraph):
+            digraph.body = [entry for entry in digraph.body if not entry.__contains__(self.name) ]
+
         def classify(self, case: pd.Series):
             if len(self.descendant_edges) == 0:
                 return self.label
@@ -112,16 +115,33 @@ class DecisionTree:
         # find most frequent class for one branch
         value_per_branch = mostFrequentPrediction(branch_nodes_to_be_pruned)
 
-        # replace all descendant edges of branch_node with one leaf having value of most frequent class
+        # replace branch_node with one leaf having value of most frequent class
         i = 0
-        for parentNode in branch_nodes_to_be_pruned:
-            parentNode.descendant_edges.clear()
-            parentNode.add_descendant_edge(value="",
-                                           descendant=DecisionTree.Node(label=value_per_branch[i], parent=parentNode))
+        for leafParent in branch_nodes_to_be_pruned:
+            pruned_tree.replaceBranch(leafParent, leaf_value=value_per_branch[i])
             i += 1
 
         return pruned_tree
 
+    def replaceBranch(self, branch_node_to_be_pruned, leaf_value):
+        branch_node_to_be_pruned.remove_from_digraph(self.digraph)
+        for node in findLeafs(branch_node_to_be_pruned):        # TODO Intermediate nodes are not deleted, only leafs
+            node.remove_from_digraph(self.digraph)
+
+        newParent = branch_node_to_be_pruned.parent
+
+        formerEdgeValue = ""
+        for edge in newParent.descendant_edges:
+            if edge.descendant is branch_node_to_be_pruned:
+                formerEdgeValue = edge.value
+
+        node = DecisionTree.Node(label=leaf_value, parent=newParent)
+
+        newParent.descendant_edges.clear()
+        newParent.add_descendant_edge(value=formerEdgeValue, descendant=node)
+
+        newParent.add_to_digraph(self.digraph)
+        node.add_to_digraph(self.digraph)
 
     def no_of_nodes(self):
         no_of_nodes = (self.digraph.body.__len__() + 1) / 2     # len consists of no. nodes and no. edges
