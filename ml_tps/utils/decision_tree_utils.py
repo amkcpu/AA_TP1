@@ -131,13 +131,16 @@ class DecisionTree:
         newParent = branch_node_to_be_pruned.parent
 
         formerEdgeValue = ""
+        i = 0
         for edge in newParent.descendant_edges:
             if edge.descendant is branch_node_to_be_pruned:
                 formerEdgeValue = edge.value
+                newParent.descendant_edges.pop(i)
+                break
+            i += 1
 
         node = DecisionTree.Node(label=leaf_value, parent=newParent)
 
-        newParent.descendant_edges.clear()
         newParent.add_descendant_edge(value=formerEdgeValue, descendant=node)
 
         newParent.add_to_digraph(self.digraph)

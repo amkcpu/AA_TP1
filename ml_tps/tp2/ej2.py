@@ -10,7 +10,7 @@ from ml_tps.utils.evaluation_utils import getConfusionMatrix, computeAccuracy, e
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_FILEPATH = f"{dir_path}/../tp2/data/titanic.csv"
 DEFAULT_OBJECTIVE = "Survived"
-DEFAULT_TRAIN_PCTG = 0.2
+DEFAULT_TRAIN_PCTG = 0.3
 
 
 def changesDaniel():
@@ -68,10 +68,10 @@ def main():
     conf_matrix_rf_shannon = getConfusionMatrix(predictions_rf_shannon, test[objective])
     conf_matrix_rf_gini = getConfusionMatrix(predictions_rf_gini, test[objective])
 
-    accuracy_dt_shannon = computeAccuracy(predictions_dt_shannon, test[objective], prediction_labels_to_drop=[-1])
-    accuracy_dt_gini = computeAccuracy(predictions_dt_gini, test[objective], prediction_labels_to_drop=[-1])
-    accuracy_rf_shannon = computeAccuracy(predictions_rf_shannon, test[objective], prediction_labels_to_drop=[-1])
-    accuracy_rf_gini = computeAccuracy(predictions_rf_gini, test[objective], prediction_labels_to_drop=[-1])
+    accuracy_dt_shannon = computeAccuracy(predictions_dt_shannon, test[objective], prediction_labels=[0, 1])
+    accuracy_dt_gini = computeAccuracy(predictions_dt_gini, test[objective], prediction_labels=[0, 1])
+    accuracy_rf_shannon = computeAccuracy(predictions_rf_shannon, test[objective], prediction_labels=[0, 1])
+    accuracy_rf_gini = computeAccuracy(predictions_rf_gini, test[objective], prediction_labels=[0, 1])
 
     print("\n\n=======================================")
     print("Decision Tree - Shannon:")
@@ -102,24 +102,27 @@ def main():
     no_nodes_dt_gini_table = [decision_tree_gini.no_of_nodes()]
 
     # Try different pruning variations
-    for no_branches_to_be_pruned in range(1, 4):
-        decision_tree_shannon_pruned = DecisionTree(train, objective=objective, gain_f="shannon").prune_tree(no_branches_to_be_pruned)
-        decision_tree_gini_pruned = DecisionTree(train, objective=objective, gain_f="gini").prune_tree(no_branches_to_be_pruned)
-        # TODO Random Forests
-    
-        accuracy_dt_shannon_pruned = computeAccuracy(decision_tree_shannon_pruned.getPredictions(test, objective),
-                                                     test[objective], prediction_labels_to_drop=[-1])
-        accuracy_dt_shannon_table.append(accuracy_dt_shannon_pruned)
-        accuracy_dt_gini_pruned = computeAccuracy(decision_tree_gini_pruned.getPredictions(test, objective),
-                                                  test[objective], prediction_labels_to_drop=[-1])
-        accuracy_dt_gini_table.append(accuracy_dt_gini_pruned)
+    for i in range(1, 10):
+        for no_branches_to_be_pruned in range(1, 3):        # prune one or two branches
+            decision_tree_shannon_pruned = DecisionTree(train, objective=objective, gain_f="shannon").prune_tree(no_branches_to_be_pruned)
+            decision_tree_gini_pruned = DecisionTree(train, objective=objective, gain_f="gini").prune_tree(no_branches_to_be_pruned)
+            # TODO Random Forests
 
-        no_nodes_dt_shannon_table.append(decision_tree_shannon_pruned.no_of_nodes())
-        no_nodes_dt_gini_table.append(decision_tree_gini_pruned.no_of_nodes())
+            accuracy_dt_shannon_pruned = computeAccuracy(decision_tree_shannon_pruned.getPredictions(test, objective),
+                                                         test[objective], prediction_labels=[0, 1])
+            accuracy_dt_shannon_table.append(accuracy_dt_shannon_pruned)
+            accuracy_dt_gini_pruned = computeAccuracy(decision_tree_gini_pruned.getPredictions(test, objective),
+                                                      test[objective], prediction_labels=[0, 1])
+            accuracy_dt_gini_table.append(accuracy_dt_gini_pruned)
+
+            no_nodes_dt_shannon_table.append(decision_tree_shannon_pruned.no_of_nodes())
+            no_nodes_dt_gini_table.append(decision_tree_gini_pruned.no_of_nodes())
 
     # plot graph, 4 lines (DT - Shannon; DT - Gini; RF - Shannon; RF - Gini)
-    plt.plot(no_nodes_dt_shannon_table, accuracy_dt_shannon_table, 'r',
-             no_nodes_dt_gini_table, accuracy_dt_gini_table, 'g')
+    plt.plot(no_nodes_dt_shannon_table, accuracy_dt_shannon_table, 'ro', label="Decision Tree - Shannon")
+    plt.plot(no_nodes_dt_gini_table, accuracy_dt_gini_table, 'go', label="Decision Tree - Gini")
+    plt.gca().legend()
+    plt.show()
 
 
     a = 1

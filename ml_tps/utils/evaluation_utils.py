@@ -16,28 +16,32 @@ def getConfusionMatrix(predictions: pd.Series, actual: pd.Series):
 
 def evalPreprocessing(predictions: pd.Series,
                       actual: pd.Series,
-                      prediction_labels_to_drop: list = None,
-                      actual_labels_to_drop: list = None):
-    if prediction_labels_to_drop != None:
-        for label in prediction_labels_to_drop:
-            predictions = predictions[predictions != label]
-            actual = actual[predictions.index]
-    if actual_labels_to_drop != None:
-        for label in actual_labels_to_drop:
-            actual = actual[actual != label]
-            predictions = predictions[actual.index]
+                      prediction_labels: list = None,
+                      actual_labels: list = None):
+    pred_saver = predictions
+    ac_saver = actual
+    if prediction_labels is not None:
+        temp_pred = pd.Series()
+        for index in predictions.index:
+            if predictions[index] in prediction_labels:
+                temp_pred = temp_pred.append(pd.Series([predictions[index]], index=[index]))
+        predictions = temp_pred
+        actual = actual[predictions.index]
+    if actual_labels is not None:
+        temp_actual = pd.Series()
+        for index in actual.index:
+            if actual[index] in actual_labels:
+                temp_actual = temp_actual.append(pd.Series([predictions[index]], index=[index]))
+        actual = temp_actual
+        predictions = predictions[actual.index]
 
     if len(predictions) != len(actual):
         raise ValueError("Number of predictions does not equal number of validation examples (actual).")
 
-    prediction_labels = predictions.value_counts().index
-    actual_labels = actual.value_counts().index
-    if len(prediction_labels) != len(actual_labels):
+    predicted_labels = predictions.value_counts().index
+    actually_used_labels = actual.value_counts().index
+    if len(predicted_labels) != len(actually_used_labels):
         raise ValueError("Number of predicted labels does not equal number of actual labels.")
-
-    if not np.array_equal(prediction_labels, actual_labels):
-        raise ValueError("Number of predicted labels equals actual number of labels, "
-                         "but they are not the same labels.")
 
     return predictions, actual
 
@@ -47,12 +51,12 @@ def getConfusionMatrixDiag(confusion_matrix: pd.DataFrame):
 
 def computeAccuracy(predictions: pd.Series,
                     actual: pd.Series,
-                    prediction_labels_to_drop: list = None,
-                    actual_labels_to_drop: list = None):
+                    prediction_labels: list = None,
+                    actual_labels: list = None):
     nr_examples = getConfusionMatrix(predictions, actual).sum().sum()
     predictions, actual = evalPreprocessing(predictions, actual,
-                                            prediction_labels_to_drop=prediction_labels_to_drop,
-                                            actual_labels_to_drop=actual_labels_to_drop)
+                                            prediction_labels=prediction_labels,
+                                            actual_labels=actual_labels)
 
     confusion_matrix = getConfusionMatrix(predictions, actual)
     confusion_matrix_diag = getConfusionMatrixDiag(confusion_matrix)
@@ -64,11 +68,11 @@ def computeAccuracy(predictions: pd.Series,
 # Returns parameters as vectors with entry for each objective class
 def getEvaluationParameters(predictions: pd.Series,
                     actual: pd.Series,
-                    prediction_labels_to_drop: list = None,
-                    actual_labels_to_drop: list = None):
+                    prediction_labels: list = None,
+                    actual_labels: list = None):
     predictions, actual = evalPreprocessing(predictions, actual,
-                                            prediction_labels_to_drop=prediction_labels_to_drop,
-                                            actual_labels_to_drop=actual_labels_to_drop)
+                                            prediction_labels=prediction_labels,
+                                            actual_labels=actual_labels)
     confusion_matrix = getConfusionMatrix(predictions, actual)
     confusion_matrix_diag = getConfusionMatrixDiag(confusion_matrix)
 
@@ -79,22 +83,23 @@ def getEvaluationParameters(predictions: pd.Series,
     TN = confusion_matrix.sum().sum() - confusion_matrix.sum(axis=0) - confusion_matrix.sum(axis=1)
     # TN = confusion_matrix.sum() - (FP + FN + TP)
 
+    '''
     if not as_vector_per_class:
         FP = FP.sum() / len(confusion_matrix_diag)
         FN = FN.sum() / len(confusion_matrix_diag)
         TP = TP.sum() / len(confusion_matrix_diag)
         TN = TN.sum() / len(confusion_matrix_diag)
-
+    '''
     return FP, FN, TP, TN
 
 
 def computeRecall(predictions: pd.Series,
                     actual: pd.Series,
-                    prediction_labels_to_drop: list = None,
-                    actual_labels_to_drop: list = None):
+                    prediction_labels: list = None,
+                    actual_labels: list = None):
     predictions, actual = evalPreprocessing(predictions, actual,
-                                            prediction_labels_to_drop=prediction_labels_to_drop,
-                                            actual_labels_to_drop=actual_labels_to_drop)
+                                            prediction_labels=prediction_labels,
+                                            actual_labels=actual_labels)
     return computeTruePositiveRate(predictions, actual)
 
 
@@ -102,11 +107,11 @@ def computeRecall(predictions: pd.Series,
 def computeTruePositiveRate(predictions: pd.Series,
                     actual: pd.Series,
                     averaged: bool = True,
-                    prediction_labels_to_drop: list = None,
-                    actual_labels_to_drop: list = None):
+                    prediction_labels: list = None,
+                    actual_labels: list = None):
     predictions, actual = evalPreprocessing(predictions, actual,
-                                            prediction_labels_to_drop=prediction_labels_to_drop,
-                                            actual_labels_to_drop=actual_labels_to_drop)
+                                            prediction_labels=prediction_labels,
+                                            actual_labels=actual_labels)
     confusion_matrix = getConfusionMatrix(predictions, actual)
     confusion_matrix_diag = getConfusionMatrixDiag(confusion_matrix)
 
@@ -121,11 +126,11 @@ def computeTruePositiveRate(predictions: pd.Series,
 # FPR = sum(False positives)/sum(Condition negative)
 # TODO Fix computation of False Positive Rate
 def computeFalsePositiveRate(predictions: pd.Series, actual: pd.Series, averaged: bool = True,
-                             prediction_labels_to_drop: list = None,
-                             actual_labels_to_drop: list = None):
+                             prediction_labels: list = None,
+                             actual_labels: list = None):
     predictions, actual = evalPreprocessing(predictions, actual,
-                                            prediction_labels_to_drop=prediction_labels_to_drop,
-                                            actual_labels_to_drop=actual_labels_to_drop)
+                                            prediction_labels=prediction_labels,
+                                            actual_labels=actual_labels)
     confusion_matrix = getConfusionMatrix(predictions, actual)
     confusion_matrix_diag = getConfusionMatrixDiag(confusion_matrix)
 
@@ -147,11 +152,11 @@ def computeFalsePositiveRate(predictions: pd.Series, actual: pd.Series, averaged
 
 
 def computePrecision(predictions: pd.Series, actual: pd.Series, averaged: bool = True,
-                     prediction_labels_to_drop: list = None,
-                     actual_labels_to_drop: list = None):
+                     prediction_labels: list = None,
+                     actual_labels: list = None):
     predictions, actual = evalPreprocessing(predictions, actual,
-                                            prediction_labels_to_drop=prediction_labels_to_drop,
-                                            actual_labels_to_drop=actual_labels_to_drop)
+                                            prediction_labels=prediction_labels,
+                                            actual_labels=actual_labels)
     confusion_matrix = getConfusionMatrix(predictions, actual)
     confusion_matrix_diag = getConfusionMatrixDiag(confusion_matrix)
 
