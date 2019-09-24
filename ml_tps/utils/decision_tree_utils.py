@@ -33,10 +33,6 @@ def mostFrequentPrediction(branch_nodes_to_be_pruned: list):
     return branch_values
 
 
-def replaceBranch(decisionTree, branchParent, replacementNode):
-
-
-
 class DecisionTree:
 
     class Node:
@@ -107,7 +103,8 @@ class DecisionTree:
 
     # TODO
     def prune_tree(self, no_branches_to_be_pruned: int):
-        leafParents = findLeafParents(self.root)
+        pruned_tree = self
+        leafParents = findLeafParents(pruned_tree.root)
         uniqueParents = list(set(leafParents))    # without repetitions
 
         branch_nodes_to_be_pruned = uniqueParents[:no_branches_to_be_pruned]
@@ -116,12 +113,14 @@ class DecisionTree:
         value_per_branch = mostFrequentPrediction(branch_nodes_to_be_pruned)
 
         # replace all descendant edges of branch_node with one leaf having value of most frequent class
-        replaceBranch()
-        for node in branch_nodes_to_be_pruned:
-            for edge in node.descendant_edges:
-                edge.clear()
+        i = 0
+        for parentNode in branch_nodes_to_be_pruned:
+            parentNode.descendant_edges.clear()
+            parentNode.add_descendant_edge(value="",
+                                           descendant=DecisionTree.Node(label=value_per_branch[i], parent=parentNode))
+            i += 1
 
-        return self
+        return pruned_tree
 
 
     def no_of_nodes(self):
