@@ -8,6 +8,7 @@ import pandas as pd
 DEFAULT_FILEPATH = "data/deporte.csv"
 DEFAULT_OBJECTIVE = "Disfruta?"
 
+
 def changesDaniel():
     import os
     os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin'
