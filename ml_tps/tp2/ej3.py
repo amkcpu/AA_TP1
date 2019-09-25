@@ -53,16 +53,17 @@ def main():
     f1 = f1_score(precision, recall)
 
     # ============== Final printout ==============
-    print("========== Data info ==========")
+    print("\n========== Ejercicio a) ==========")
+    print("Mean no. of words of 1-star-reviews:", one_star_review_mean_words)
+
+    print("\n\n========== Data info ==========")
     print("Data set dimensions: ", dataset.shape)
     print("Training set dimensions: ", training_set.shape)
     print("Evaluation set dimensions: ", evaluation_set.shape)
     print("Percentage of data set used for training: ", train_pctg)
+    print("Classification objective: ", DEFAULT_OBJECTIVE)
 
-    print("\n========== Ejercicio a) ==========")
-    print("Mean no. of words of 1-star-reviews:", one_star_review_mean_words)
-
-    print("\n\n========== Evaluation metrics KNN ==========")
+    print("\n========== Evaluation metrics KNN ==========")
     print("Accuracy: ", accuracy, "\n")
 
     print("Confusion matrix:\n", confusion_matrix)
