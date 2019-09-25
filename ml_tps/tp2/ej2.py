@@ -34,7 +34,7 @@ def pour_titanic_dataset(dataset: pd.DataFrame):
 def main():
     objective = DEFAULT_OBJECTIVE
     training_percentage = DEFAULT_TRAIN_PCTG
-    view_trees = False
+    view_trees = True
 
     dataset = pd.read_csv(DEFAULT_FILEPATH, sep="\t")
     dataset = pour_titanic_dataset(dataset)
