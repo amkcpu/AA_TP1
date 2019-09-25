@@ -10,7 +10,7 @@ from ml_tps.utils.evaluation_utils import getConfusionMatrix, computeAccuracy, e
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_FILEPATH = f"{dir_path}/../tp2/data/titanic.csv"
 DEFAULT_OBJECTIVE = "Survived"
-DEFAULT_TRAIN_PCTG = 0.3
+DEFAULT_TRAIN_PCTG = 0.6
 
 
 def changesDaniel():

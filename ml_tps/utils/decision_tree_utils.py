@@ -127,7 +127,6 @@ class DecisionTree:
             pruned_tree.replaceBranch(leafParent, leaf_value=value_per_branch[i])
             i += 1
 
-        #findChildren(pruned_tree.root)
         return pruned_tree
 
     def replaceBranch(self, branch_node_to_be_pruned, leaf_value):
