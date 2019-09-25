@@ -122,6 +122,8 @@ def main():
     plt.plot(no_nodes_dt_shannon_table, accuracy_dt_shannon_table, 'ro', label="Shannon")
     plt.plot(no_nodes_dt_gini_table, accuracy_dt_gini_table, 'go', label="Gini")
     plt.gca().legend()
+    plt.xlabel("No. of nodes")
+    plt.ylabel("Accuracy")
     plt.show()
 
 
