@@ -25,11 +25,11 @@ def main():
 
     # =========== EJ1 a) Create and generate Decision Tree ==========
     decision_tree = DecisionTree(dataset[:4], objective, "shannon")    # exclude example (5th example)
-    decision_tree.plot()
+    decision_tree.plot(name_prefix="Shannon")
 
     # =========== EJ1 b) Add example ==========
     decision_tree_example_added = DecisionTree(dataset, objective, "shannon")
-    decision_tree_example_added.plot()
+    decision_tree_example_added.plot(name_prefix="Shannon_Example_Added")
 
     a = 1
 
