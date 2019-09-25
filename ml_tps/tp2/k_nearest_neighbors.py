@@ -4,7 +4,6 @@ import numpy as np
 
 # Input: DataFrame with numeric attributes and label in last column
 def knn(example: pd.Series, training_set: pd.DataFrame, objective: str, k: int, weighted: bool):
-    # find k nearest neighbors
     if not len(example) + 1 == len(training_set.columns):
         raise ValueError("Example does not have the same amount of attributes as training data.")
 
@@ -53,7 +52,6 @@ def predictionPerClass(nearest_neighbors: pd.DataFrame, weighted: bool):
     available_classes = nearest_neighbors["Objective Value"].unique()  # which classes occur in nearest neighbors
     predicted_classes = pd.Series(np.array(np.zeros(len(available_classes))), index=available_classes)
 
-    weight = 1
     for this_class in available_classes:
         class_members = nearest_neighbors[nearest_neighbors["Objective Value"] == this_class]
         if weighted:
