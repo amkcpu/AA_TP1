@@ -17,6 +17,12 @@ def findLeafs(node):
         return [item for edge in node.descendant_edges for item in findLeafs(edge.descendant)]
 
 
+def subtreeFromNode(node):
+    if len(node.descendant_edges) == 0:
+        return [node]
+    else:
+        return [node] + [item for edge in node.descendant_edges for item in subtreeFromNode(edge.descendant)]
+
 def findLeafParents(node):
     return [leaf.parent for leaf in findLeafs(node)]
 
@@ -121,11 +127,14 @@ class DecisionTree:
             pruned_tree.replaceBranch(leafParent, leaf_value=value_per_branch[i])
             i += 1
 
+        #findChildren(pruned_tree.root)
         return pruned_tree
 
     def replaceBranch(self, branch_node_to_be_pruned, leaf_value):
         branch_node_to_be_pruned.remove_from_digraph(self.digraph)
-        for node in findLeafs(branch_node_to_be_pruned):        # TODO Intermediate nodes are not deleted, only leafs
+        children = subtreeFromNode(branch_node_to_be_pruned)
+        children.remove(branch_node_to_be_pruned)
+        for node in children:
             node.remove_from_digraph(self.digraph)
 
         newParent = branch_node_to_be_pruned.parent
@@ -143,7 +152,7 @@ class DecisionTree:
 
         newParent.add_descendant_edge(value=formerEdgeValue, descendant=node)
 
-        newParent.add_to_digraph(self.digraph)
+        newParent.add_to_digraph(self.digraph)          # TODO Previous edges are shown 2 times in graph
         node.add_to_digraph(self.digraph)
 
     def no_of_nodes(self):

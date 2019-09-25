@@ -119,8 +119,8 @@ def main():
             no_nodes_dt_gini_table.append(decision_tree_gini_pruned.no_of_nodes())
 
     # plot graph, 4 lines (DT - Shannon; DT - Gini; RF - Shannon; RF - Gini)
-    plt.plot(no_nodes_dt_shannon_table, accuracy_dt_shannon_table, 'ro', label="Decision Tree - Shannon")
-    plt.plot(no_nodes_dt_gini_table, accuracy_dt_gini_table, 'go', label="Decision Tree - Gini")
+    plt.plot(no_nodes_dt_shannon_table, accuracy_dt_shannon_table, 'ro', label="Shannon")
+    plt.plot(no_nodes_dt_gini_table, accuracy_dt_gini_table, 'go', label="Gini")
     plt.gca().legend()
     plt.show()
 
