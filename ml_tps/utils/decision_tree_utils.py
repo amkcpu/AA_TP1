@@ -17,11 +17,11 @@ def findLeafs(node):
         return [item for edge in node.descendant_edges for item in findLeafs(edge.descendant)]
 
 
-def subtreeFromNode(node):
+def findSubtreeFromNode(node):
     if len(node.descendant_edges) == 0:
         return [node]
     else:
-        return [node] + [item for edge in node.descendant_edges for item in subtreeFromNode(edge.descendant)]
+        return [node] + [item for edge in node.descendant_edges for item in findSubtreeFromNode(edge.descendant)]
 
 def findLeafParents(node):
     return [leaf.parent for leaf in findLeafs(node)]
@@ -78,6 +78,11 @@ class DecisionTree:
             self.value: str = value
             self.descendant: DecisionTree.Node = descendant
 
+        def add_to_digraph(self, digraph, parent):
+            self.descendant.add_to_digraph(digraph)
+            print(f"{parent.label} -> {self}")
+            digraph.edge(tail_name=parent.name, head_name=self.descendant.name, label=str(self.value))
+
     def __init__(self, dataset: pd.DataFrame, objective: str, gain_f: str = "shannon",
                  nodes: int = None, variables: int = None):
         if gain_f.lower() == "gini":
@@ -130,10 +135,8 @@ class DecisionTree:
         return pruned_tree
 
     def replaceBranch(self, branch_node_to_be_pruned, leaf_value):
-        branch_node_to_be_pruned.remove_from_digraph(self.digraph)
-        children = subtreeFromNode(branch_node_to_be_pruned)
-        children.remove(branch_node_to_be_pruned)
-        for node in children:
+        # Remove old nodes & edges
+        for node in findSubtreeFromNode(branch_node_to_be_pruned):
             node.remove_from_digraph(self.digraph)
 
         newParent = branch_node_to_be_pruned.parent
@@ -149,15 +152,11 @@ class DecisionTree:
 
         node = DecisionTree.Node(label=leaf_value, parent=newParent)
 
-        newParent.add_descendant_edge(value=formerEdgeValue, descendant=node)
-
-        newParent.add_to_digraph(self.digraph)          # TODO Previous edges are shown 2 times in graph
-        node.add_to_digraph(self.digraph)
+        newParent.add_descendant_edge(value=formerEdgeValue, descendant=node)   # add to root
+        DecisionTree.Edge(formerEdgeValue, node).add_to_digraph(self.digraph, newParent)    # add to digraph
 
     def no_of_nodes(self):
-        no_of_nodes = (self.digraph.body.__len__() + 1) / 2     # len consists of no. nodes and no. edges
-                                                                # because of root node, there is one additional node
-        return no_of_nodes
+        return len(findSubtreeFromNode(self.root))
 
 
 class RandomForest:
