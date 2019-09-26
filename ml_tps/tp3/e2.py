@@ -1,12 +1,11 @@
 # Trabajo Practico 3 - Ejercicio 2
 import datetime
-
-from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, scale_dataset, seperateDatasetObjectiveData
 import pandas as pd
 import numpy as np
 import os
 from sklearn import svm
 from ml_tps.utils.evaluation_utils import getConfusionMatrix, computeAccuracy
+from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, scale_dataset, seperateDatasetObjectiveData
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_FILEPATH = f"{dir_path}/../tp3/data/acath.xls"
@@ -30,9 +29,9 @@ def main():
     svm_values = pd.DataFrame(columns=["Kernel", "C value", "Accuracy"])
     c_value1 = 1
     kernel1 = "rbf"
-    clf = svm.SVC(kernel=kernel1, gamma='scale', C=c_value1)      # using default parameters, written down for illustrative purposes
-    clf.fit(X_train, y_train)
-    predictions_test = pd.Series(clf.predict(X_test).T)
+    clf1 = svm.SVC(kernel=kernel1, gamma='scale', C=c_value1)      # using default parameters, written down for illustrative purposes
+    clf1.fit(X_train, y_train)
+    predictions_test = pd.Series(clf1.predict(X_test).T)
     confusion_matrix = getConfusionMatrix(predictions_test, y_test)
     accuracy1 = computeAccuracy(predictions_test, y_test)
 
@@ -43,9 +42,8 @@ def main():
 
     # c)  Evaluate different values for C and different nuclei to find better performing classifiers
     for kernel in ["rbf", "poly", "linear", "sigmoid"]:
-        for c_value in np.logspace(-3, 2, 6):   # TODO SVM with C=0.001 seem to predict only 1's -> error in computeAccuracy
+        for c_value in np.logspace(-3, 2, 6):
             clf = svm.SVC(kernel=kernel, C=c_value, gamma="scale", cache_size=500)
-            print(clf)
             clf.fit(X_train, y_train)
             predictions = pd.Series(clf.predict(X_test).T)
             accuracy = computeAccuracy(predictions, y_test)
@@ -53,7 +51,7 @@ def main():
             svm_values.loc[svm_values.index.max() + 1] = [kernel, c_value, accuracy]
 
     time_now = datetime.datetime.now()
-    print("\n\nRuntime C Parameter testing: ", divmod((time_now - words_now).total_seconds(), 60), "\n")
+    print("\n\nRuntime parameter and kernel testing: ", divmod((time_now - words_now).total_seconds(), 60), "\n")
 
     a = 1
 
