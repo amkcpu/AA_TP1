@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import numbers
+from sklearn.preprocessing import MinMaxScaler
 
 
 def subdataframe(dataset: pd.DataFrame, attribute: str, value = None):
@@ -36,3 +37,25 @@ def deleteNonNumericColumns(dataset: pd.DataFrame):
         if not isinstance(first_element_in_column, numbers.Number):
             del dataset[i]
     return dataset
+
+
+# Scales given dataset, ignoring objective column
+def scale_dataset(dataset: pd.DataFrame, objective: str, ignore_objective: bool=True, scaling_type: str="minmax"):
+    if scaling_type == "minmax":    # TODO add more/different scaling types
+        scaler = MinMaxScaler()
+    else:
+        scaler = MinMaxScaler()
+
+    if ignore_objective:
+        X, y = seperateDatasetObjectiveData(dataset, objective)
+        X_scaled = pd.DataFrame(scaler.fit_transform(X), index=X.index, columns=X.columns)
+        return pd.concat([X_scaled, y], axis=1)
+    else:
+        return pd.DataFrame(scaler.fit_transform(dataset), index=dataset.index, columns=dataset.columns)
+
+
+def seperateDatasetObjectiveData(dataset: pd.DataFrame, objective: str):
+    X = dataset.loc[:, dataset.columns != objective]
+    y = dataset[objective]
+
+    return X, y

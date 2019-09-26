@@ -2,18 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-def getConfusionMatrix(predictions: pd.Series, actual: pd.Series):
-    if len(predictions) != len(actual):
-        raise ValueError("Mismatch between number of predictions and number of actual objective values.")
-
-    predictions.index = actual.index        # so indices are equal
-    return pd.crosstab(index=predictions,
-                       columns=actual,
-                       rownames=['Predicted'],
-                       colnames=['Actual'],
-                       dropna=False)
-
-
+# TODO revise if this is necessary with new confusion_matrix_diag() in place
 def evalPreprocessing(predictions: pd.Series,
                       actual: pd.Series,
                       prediction_labels: list = None,
@@ -45,23 +34,38 @@ def evalPreprocessing(predictions: pd.Series,
 
     return predictions, actual
 
+
+def getConfusionMatrix(predictions: pd.Series, actual: pd.Series):
+    if len(predictions) != len(actual):
+        raise ValueError("Mismatch between number of predictions and number of actual objective values.")
+
+    predictions.index = actual.index        # so indices are equal
+    return pd.crosstab(index=predictions,
+                       columns=actual,
+                       rownames=['Predicted'],
+                       colnames=['Actual'],
+                       dropna=False)
+
+
+# Expects true objective values to be the columns
 def getConfusionMatrixDiag(confusion_matrix: pd.DataFrame):
-    return pd.Series(np.diag(confusion_matrix), index=confusion_matrix.index)
+    cm_diag = {}
+    for col in confusion_matrix.columns:
+        try:
+            cm_diag[col] = confusion_matrix.loc[col, col]
+        except KeyError:
+            continue
+
+    return pd.Series(cm_diag)
 
 
 def computeAccuracy(predictions: pd.Series,
-                    actual: pd.Series,
-                    prediction_labels: list = None,
-                    actual_labels: list = None):
-    nr_examples = getConfusionMatrix(predictions, actual).sum().sum()
-    predictions, actual = evalPreprocessing(predictions, actual,
-                                            prediction_labels=prediction_labels,
-                                            actual_labels=actual_labels)
-
+                    actual: pd.Series):
     confusion_matrix = getConfusionMatrix(predictions, actual)
-    confusion_matrix_diag = getConfusionMatrixDiag(confusion_matrix)
+    nr_examples = confusion_matrix.sum().sum()
+    nr_correctly_classified = getConfusionMatrixDiag(confusion_matrix).sum()
 
-    return confusion_matrix_diag.sum() / nr_examples
+    return nr_correctly_classified / nr_examples
 
 
 # TODO Fix TN and assure correctness in multi-class applications

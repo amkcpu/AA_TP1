@@ -1,12 +1,11 @@
 # Trabajo Practico 3 - Ejercicio 2
 import datetime
 
-from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets
+from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, scale_dataset, seperateDatasetObjectiveData
 import pandas as pd
 import numpy as np
 import os
 from sklearn import svm
-from sklearn.preprocessing import MinMaxScaler
 from ml_tps.utils.evaluation_utils import getConfusionMatrix, computeAccuracy
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -19,22 +18,15 @@ def main():
     # a)  Divide dataset randomly into training and evaluation set
     dataset = pd.read_excel(DEFAULT_FILEPATH)
     dataset = dataset.dropna()      # TODO maybe deal with NaN otherwise?
-
-    datasetX = dataset.loc[:, dataset.columns != DEFAULT_OBJECTIVE]
-    scaler = MinMaxScaler()
-    datasetX_scaled = pd.DataFrame(scaler.fit_transform(datasetX), index=datasetX.index, columns=datasetX.columns)
-    dataset_scaled = pd.concat([datasetX_scaled, dataset[DEFAULT_OBJECTIVE]], axis=1)
+    dataset_scaled = scale_dataset(dataset, objective=DEFAULT_OBJECTIVE, ignore_objective=True, scaling_type="minmax")
 
     train, test = divide_in_training_test_datasets(dataset_scaled, train_pctg=DEFAULT_TRAIN_PCTG)
 
-    X_train = train.loc[:, train.columns != DEFAULT_OBJECTIVE]
-    y_train = train[DEFAULT_OBJECTIVE]
+    X_train, y_train = seperateDatasetObjectiveData(train, DEFAULT_OBJECTIVE)
+    X_test, y_test = seperateDatasetObjectiveData(test, DEFAULT_OBJECTIVE)
 
-    X_test = test.loc[:, test.columns != DEFAULT_OBJECTIVE]
-    y_test = test[DEFAULT_OBJECTIVE]
-
-    words_then = datetime.datetime.now()
     # b)  Classify categorical variable "sigdz" using default SVC SVM
+    words_then = datetime.datetime.now()
     svm_values = pd.DataFrame(columns=["Kernel", "C value", "Accuracy"])
     c_value1 = 1
     kernel1 = "rbf"
