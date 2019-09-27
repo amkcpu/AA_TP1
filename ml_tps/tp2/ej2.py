@@ -68,10 +68,10 @@ def main():
     conf_matrix_rf_shannon = getConfusionMatrix(predictions_rf_shannon, test[objective])
     conf_matrix_rf_gini = getConfusionMatrix(predictions_rf_gini, test[objective])
 
-    accuracy_dt_shannon = computeAccuracy(predictions_dt_shannon, test[objective], prediction_labels=[0, 1])
-    accuracy_dt_gini = computeAccuracy(predictions_dt_gini, test[objective], prediction_labels=[0, 1])
-    accuracy_rf_shannon = computeAccuracy(predictions_rf_shannon, test[objective], prediction_labels=[0, 1])
-    accuracy_rf_gini = computeAccuracy(predictions_rf_gini, test[objective], prediction_labels=[0, 1])
+    accuracy_dt_shannon = computeAccuracy(predictions_dt_shannon, test[objective])
+    accuracy_dt_gini = computeAccuracy(predictions_dt_gini, test[objective])
+    accuracy_rf_shannon = computeAccuracy(predictions_rf_shannon, test[objective])
+    accuracy_rf_gini = computeAccuracy(predictions_rf_gini, test[objective])
 
     print("\n\n=======================================")
     print("Decision Tree - Shannon:")
@@ -97,12 +97,12 @@ def main():
 
     accuracy_dt_shannon_table = [accuracy_dt_shannon]
     accuracy_dt_shannon_train = [computeAccuracy(decision_tree_shannon.getPredictions(train, objective),
-                                                 train[objective], prediction_labels=[0, 1])]
+                                                 train[objective])]
     no_nodes_dt_shannon_table = [decision_tree_shannon.no_of_nodes()]
 
     accuracy_dt_gini_table = [accuracy_dt_gini]
     accuracy_dt_gini_train = [computeAccuracy(decision_tree_gini.getPredictions(train, objective),
-                                                         train[objective], prediction_labels=[0, 1])]
+                                                         train[objective])]
     no_nodes_dt_gini_table = [decision_tree_gini.no_of_nodes()]
 
     # Try different pruning variations
@@ -115,20 +115,20 @@ def main():
             # TODO Random Forests
 
             accuracy_dt_shannon_pruned = computeAccuracy(decision_tree_shannon_pruned.getPredictions(test, objective),
-                                                         test[objective], prediction_labels=[0, 1])
+                                                         test[objective])
             accuracy_dt_shannon_table.append(accuracy_dt_shannon_pruned)
 
             accuracy_dt_shannon_pruned_train = computeAccuracy(decision_tree_shannon_pruned.getPredictions(train, objective),
-                                                         train[objective], prediction_labels=[0, 1])
+                                                         train[objective])
             accuracy_dt_shannon_train.append(accuracy_dt_shannon_pruned_train)
 
             accuracy_dt_gini_pruned = computeAccuracy(decision_tree_gini_pruned.getPredictions(test, objective),
-                                                      test[objective], prediction_labels=[0, 1])
+                                                      test[objective])
             accuracy_dt_gini_table.append(accuracy_dt_gini_pruned)
 
             accuracy_dt_gini_pruned_train = computeAccuracy(
                 decision_tree_gini_pruned.getPredictions(train, objective),
-                train[objective], prediction_labels=[0, 1])
+                train[objective])
             accuracy_dt_gini_train.append(accuracy_dt_gini_pruned_train)
 
             no_nodes_dt_shannon_table.append(decision_tree_shannon_pruned.no_of_nodes())
