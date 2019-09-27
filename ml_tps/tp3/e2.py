@@ -29,41 +29,51 @@ def main():
 
     # b)  Classify categorical variable "sigdz" using default SVC SVM
     words_then = datetime.datetime.now()
-    svm_values = pd.DataFrame(columns=["Kernel", "C value", "Accuracy"])
     c_value1 = 1
     kernel1 = "rbf"
     clf1 = svm.SVC(kernel=kernel1, gamma='scale', C=c_value1)      # using default parameters, written down for illustrative purposes
     clf1.fit(X_train, y_train)
-    predictions_test = pd.Series(clf1.predict(X_cv_set).T)
-    confusion_matrix = getConfusionMatrix(predictions_test, y_cv_set)
-    accuracy1 = computeAccuracy(predictions_test, y_cv_set)
+    predictions_train1 = pd.Series(clf1.predict(X_train).T)
+    predictions_cv1 = pd.Series(clf1.predict(X_cv_set).T)
+    confusion_matrix = getConfusionMatrix(predictions_cv1, y_cv_set)
+    accuracy_train1 = computeAccuracy(predictions_train1, y_train)
+    accuracy_cv1 = computeAccuracy(predictions_cv1, y_cv_set)
 
-    svm_values.loc[0] = [kernel1, c_value1, accuracy1]
+    data_default_svm = pd.DataFrame(columns=["Kernel", "C value", "Training set accuracy", "CV set accuracy"])
+    data_default_svm.loc[0] = [kernel1, c_value1, accuracy_train1, accuracy_cv1]
 
     words_now = datetime.datetime.now()
     print("Runtime Default SVM fitting and testing: ", divmod((words_now - words_then).total_seconds(), 60), "\n")
 
     # c)  Evaluate different values for C and different nuclei to find better performing classifiers
+    svm_values = pd.DataFrame(columns=["Kernel", "C value", "Training set accuracy", "CV set accuracy"])
+
+    i = 0
     for kernel in ["rbf", "poly", "linear", "sigmoid"]:
         for c_value in np.logspace(-3, 2, 6):
             clf = svm.SVC(kernel=kernel, C=c_value, gamma="scale", cache_size=500)
             clf.fit(X_train, y_train)
-            predictions = pd.Series(clf.predict(X_cv_set).T)
-            accuracy = computeAccuracy(predictions, y_cv_set)
+            predictions_train = pd.Series(clf.predict(X_train).T)
+            predictions_cv = pd.Series(clf.predict(X_cv_set).T)
+            accuracy_train = computeAccuracy(predictions_train, y_train)
+            accuracy_cv = computeAccuracy(predictions_cv, y_cv_set)
 
-            svm_values.loc[svm_values.index.max() + 1] = [kernel, c_value, accuracy]
+            svm_values.loc[i] = [kernel, c_value, accuracy_train, accuracy_cv]
+            i += 1
 
     time_now = datetime.datetime.now()
     print("\n\nRuntime parameter and kernel testing: ", divmod((time_now - words_now).total_seconds(), 60), "\n")
 
     # Choose SVM with highest accuracy after hyperparameter tuning
-    winner = svm_values.sort_values(by="Accuracy", ascending=False).head(1)
+    winner = svm_values.sort_values(by="CV set accuracy", ascending=False).head(1)
 
     # Calculate real performance on test set
     winner_svm = svm.SVC(kernel=winner.iat[0, 0], C=winner.iat[0, 1], gamma="scale", cache_size=500)
     winner_svm.fit(X_train, y_train)
     winner_test_predictions = pd.Series(winner_svm.predict(X_test).T)
     winner_test_accuracy = computeAccuracy(winner_test_predictions, y_test)
+
+    winner["Test set accuracy"] = winner_test_accuracy
 
     a = 1
 
