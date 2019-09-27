@@ -8,8 +8,6 @@ import os
 from sklearn import svm
 from ml_tps.utils.evaluation_utils import getConfusionMatrix, computeAccuracy
 from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, scale_dataset, seperateDatasetObjectiveData
-import matplotlib
-matplotlib.use("TKAgg")     # so that imshow() actually shows images
 import matplotlib.image as img
 import matplotlib.pyplot as plt
 
@@ -19,13 +17,18 @@ DEFAULT_FILEPATH = f"{dir_path}/../tp3/data/"
 def main():
     # a)  Construir un conjunto de datos para entrenamiento, indicando para cada muestra a qué clase pertenece.
     pictures = []
-    picture_names = ["cielo", "cow", "pasto", "vaca"]
+    picture_names = ["cow", "cielo", "pasto", "vaca"]
 
     for pic in picture_names:
         pictures.append(img.imread(DEFAULT_FILEPATH + pic + ".jpg"))
 
+    # Show all four pictures together
+    i = 221
     for pic in pictures:
+        plt.subplot(i)
         plt.imshow(pic)
+        i += 1
+    plt.show()
 
     # b)  Dividir aleatoriamente el conjunto de datos en dos conjuntos, uno de entrenamiento y uno de prueba.
     # c)  Utilizar el método SVM para clasificar los pixels del conjunto de prueba, entrenando con el conjunto de entrenamiento.
