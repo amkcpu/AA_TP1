@@ -53,6 +53,9 @@ def main():
     time_now = datetime.datetime.now()
     print("\n\nRuntime parameter and kernel testing: ", divmod((time_now - words_now).total_seconds(), 60), "\n")
 
+    # Choose SVM with highest accuracy
+    winner = svm_values.sort_values(by="Accuracy", ascending=False).head(1)
+
     a = 1
 
 
