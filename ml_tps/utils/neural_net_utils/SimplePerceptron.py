@@ -1,14 +1,14 @@
 import numpy as np
 
 
-def step(pattern, w):
-    return np.dot(pattern.input, w)
+def step(w, pattern_input):
+    return np.dot(w, pattern_input)
 
 
 class Pattern:
 
     def __init__(self, raw_pattern, response):
-        self.input = np.array([-1] + raw_pattern)
+        self.input = np.array([0] + raw_pattern) / 2.5 - 1
         self.response = response
 
     def __repr__(self):
@@ -27,7 +27,8 @@ class SimplePerceptron:
         self.eta = eta
         self.patterns = patterns
         self.epochs = epochs
-        self.error = sum([abs(pattern.response - np.sign(step(pattern, self.w.T))) for pattern in self.patterns]) / len(
+        self.error = sum(
+            [abs(pattern.response - np.sign(step(self.w, pattern.input))) for pattern in self.patterns]) / len(
             self.patterns)
         self.min_error = self.error
         self.min_w = self.w
@@ -37,20 +38,23 @@ class SimplePerceptron:
         while self.error > self.error_min_accepted and self.epochs > i:
             np.random.shuffle(self.patterns)
 
+            #if (i - 1) % (self.epochs / 5) == 0:
+            #    self.w = np.random.random(len(self.w))
+
             for pattern in self.patterns:
-                output = step(pattern, self.w.T)
-                delta_w = self.eta * (pattern.response - np.sign(output)) * pattern.input.T
+                output = step(self.w, pattern.input)
+                delta_w = self.eta * (pattern.response - np.sign(output)) * pattern.input
                 self.w += delta_w
 
-            self.error = sum([abs(pattern.response - np.sign(step(pattern, self.w.T))) for pattern in self.patterns]) / len(self.patterns)
+            self.error = sum([abs(pattern.response - np.sign(step(self.w, pattern.input))) for pattern in self.patterns]) / len(self.patterns)
             if self.error < self.min_error:
                 self.min_error = self.error
-                self.min_w = self.w
+                self.min_w = self.w.copy()
             i += 1
 
         self.error = self.min_error
         self.w = self.min_w
 
     def get_value(self, pattern: Pattern):
-        return np.sign(step(pattern, self.w.T))
+        return np.sign(step(self.w, pattern.input))
 
