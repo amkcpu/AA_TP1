@@ -21,12 +21,12 @@ class Pattern:
 
 class SimplePerceptron:
 
-    def __init__(self, size, error, step_size, patterns, iters):
+    def __init__(self, size, error, learning_rate, patterns, epochs):
         self.w = np.random.random(size+1)
         self.error_min_accepted = error
-        self.step_size = step_size
+        self.learning_rate = learning_rate
         self.patterns = patterns
-        self.iters = iters
+        self.epochs = epochs
         self.error = sum(
             [abs(pattern.response - np.sign(step(self.w, pattern.input))) for pattern in self.patterns]) / len(
             self.patterns)
@@ -35,15 +35,15 @@ class SimplePerceptron:
 
     def train(self):
         i = 0
-        while self.error > self.error_min_accepted and self.iters > i:
+        while self.error > self.error_min_accepted and self.epochs > i:
             np.random.shuffle(self.patterns)
 
-            #if (i - 1) % (self.iters / 5) == 0:
+            #if (i - 1) % (self.epochs / 5) == 0:
             #    self.w = np.random.random(len(self.w))
 
             for pattern in self.patterns:
                 output = step(self.w, pattern.input)
-                delta_w = self.step_size * (pattern.response - np.sign(output)) * pattern.input
+                delta_w = self.learning_rate * (pattern.response - np.sign(output)) * pattern.input
                 self.w += delta_w
 
             self.error = sum([abs(pattern.response - np.sign(step(self.w, pattern.input))) for pattern in self.patterns]) / len(self.patterns)
