@@ -32,6 +32,7 @@ class SimplePerceptron:
             self.patterns)
         self.min_error = self.error
         self.min_w = self.w
+        self.last_train_i = -1
 
     def train(self):
         i = 0
@@ -54,6 +55,7 @@ class SimplePerceptron:
 
         self.error = self.min_error
         self.w = self.min_w
+        self.last_train_i = i
 
     def get_value(self, pattern: Pattern):
         return np.sign(step(self.w, pattern.input))
