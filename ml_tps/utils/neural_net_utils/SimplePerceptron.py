@@ -38,7 +38,7 @@ class SimplePerceptron:
         while self.error > self.error_min_accepted and self.iters > i:
             np.random.shuffle(self.patterns)
 
-            #if (i - 1) % (self.epochs / 5) == 0:
+            #if (i - 1) % (self.iters / 5) == 0:
             #    self.w = np.random.random(len(self.w))
 
             for pattern in self.patterns:
