@@ -39,14 +39,14 @@ def deleteNonNumericColumns(dataset: pd.DataFrame):
     return dataset
 
 
-# Scales given dataset, ignoring objective column
-def scale_dataset(dataset: pd.DataFrame, objective: str, ignore_objective: bool=True, scaling_type: str="minmax"):
+# Scales given dataset, not scaling objective column if passed
+def scale_dataset(dataset: pd.DataFrame, objective: str = None, scaling_type: str="minmax"):
     if scaling_type == "minmax":    # TODO add more/different scaling types
         scaler = MinMaxScaler()
     else:
         scaler = MinMaxScaler()
 
-    if ignore_objective:
+    if objective is not None:
         X, y = seperateDatasetObjectiveData(dataset, objective)
         X_scaled = pd.DataFrame(scaler.fit_transform(X), index=X.index, columns=X.columns)
         return pd.concat([X_scaled, y], axis=1)
@@ -59,3 +59,11 @@ def seperateDatasetObjectiveData(dataset: pd.DataFrame, objective: str):
     y = dataset[objective]
 
     return X, y
+
+
+def get_test_train_X_y(data: pd.DataFrame, objective: str, train_pctg: float = 0.5):
+    train, test = divide_in_training_test_datasets(data, train_pctg)
+    X_train, y_train = seperateDatasetObjectiveData(train, objective)
+    X_test, y_test = seperateDatasetObjectiveData(test, objective)
+
+    return X_train, y_train, X_test, y_test
