@@ -39,7 +39,7 @@ def main():
     predictions_cv1 = pd.Series(clf1.predict(X_cv_set).T)
     confusion_matrix = getConfusionMatrix(predictions_cv1, y_cv_set)
     accuracy_train1 = get_svm_accuracy(fitted_classifier=clf1, X=X_train, y=y_train)
-    accuracy_cv1 = get_svm_accuracy(fitted_classifier=clf1, X=y_cv_set, y=y_cv_set)
+    accuracy_cv1 = get_svm_accuracy(fitted_classifier=clf1, X=X_cv_set, y=y_cv_set)
 
     data_default_svm = pd.DataFrame(columns=["Kernel", "C value", "Training set accuracy", "CV set accuracy"])
     data_default_svm.loc[0] = [kernel1, c_value1, accuracy_train1, accuracy_cv1]
