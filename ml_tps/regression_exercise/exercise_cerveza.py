@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 from ml_tps.utils.dataframe_utils import get_test_train_X_y
-from ml_tps.utils.regression_utils.linear_regression import fit_using_normal_equation, add_bias_to_dataset
+from ml_tps.utils.regression_utils.linear_regression import fit_using_normal_equation, plot_2d
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_FILEPATH = f"{dir_path}/../regression_exercise/data/"
@@ -17,14 +17,16 @@ def main():
 
     # Predict according to "Cajas"
     X_train_cajas = X_train.drop("Distancia", axis=1)
-    b_cajas = fit_using_normal_equation(X=X_train_cajas, y=y_train, plot=True)
+    b_cajas = fit_using_normal_equation(X=X_train_cajas, y=y_train)
+    plot_2d(X_train_cajas, y_train, b_cajas)
 
 
     # Predict according to "Distancia"
     X_train_distancia = X_train.drop("Cajas", axis=1)
-    b_distancia = fit_using_normal_equation(X=X_train_distancia, y=y_train, plot=True)
+    b_distancia = fit_using_normal_equation(X=X_train_distancia, y=y_train)
+    plot_2d(X_train_distancia, y_train, b_distancia)
 
-    # Compare models calculating RSS
+    # TODO Compare models calculating RSS
 
     a = 1
 
