@@ -14,16 +14,15 @@ def add_bias_to_dataset(dataset: pd.DataFrame):
 class LinearRegression:
 
     def __init__(self, initial_b: pd.Series = None):
-        if initial_b is None:
-            self.b = 0
-        else:
-            self.b = initial_b
+        self.b = initial_b
 
     def fit(self, X: pd.DataFrame, y: pd.Series):       # using Normal Equation approach
         X = add_bias_to_dataset(X)
         self.b = np.linalg.inv(X.T @ X) @ (X.T @ y)     # b = inv(X'X)*X'y
 
     def predict(self, X: pd.DataFrame):
+        if self.b is None:
+            raise ValueError("Model has not been fitted yet (regression parameters b = None).")
         X = add_bias_to_dataset(X)
 
         return X @ self.b
@@ -40,10 +39,10 @@ class LinearRegression:
         plt.show()
 
     def calculate_sums_of_squares(self, X: pd.DataFrame, y: pd.Series):
-        TSS = (y - y.mean()).T @ (y - y.mean())  # TSS = (y-mean(y)'(y-mean(y)
-        errors = y - self.predict(X)  # e = y - Xb
-        RSS = errors.T @ errors  # RSS = e'e
-        ESS = TSS - RSS  # ESS = TSS - RSS
+        TSS = (y - y.mean()).T @ (y - y.mean())     # TSS = (y-mean(y)'(y-mean(y)
+        errors = y - self.predict(X)                # e = y - Xb
+        RSS = errors.T @ errors                     # RSS = e'e
+        ESS = TSS - RSS                             # ESS = TSS - RSS
 
         return TSS, ESS, RSS
 
