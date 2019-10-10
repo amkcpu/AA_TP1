@@ -27,16 +27,27 @@ class LinearRegression:
 
         return X @ self.b
 
-    def plot_2d(self, X: pd.DataFrame, y: pd.Series):
-        if len(X.columns) != 1:
-            raise ValueError("This method only plots 2D data and regression lines. "
-                             "The X that was passed has {} columns instead of 1.".format(len(X.columns)))
+    def plot(self, X: pd.DataFrame, y: pd.Series):
+        no_predictors = len(X.columns)
 
-        x_sampling = pd.DataFrame(np.linspace(min(X.values), max(X.values), 1000))
+        if no_predictors == 1:
+            sampling_data = pd.DataFrame(np.linspace(min(X.values), max(X.values), 1000))
 
-        plt.plot(X.values, y.values, "bo")
-        plt.plot(x_sampling, self.predict(x_sampling), "r")
-        plt.show()
+            plt.plot(X, y, "bo")
+            plt.plot(sampling_data, self.predict(sampling_data), "r")
+            plt.show()
+        elif no_predictors == 2:        # TODO fix 3D plot
+            sampling_data = pd.DataFrame(np.linspace(min(X.iloc[:, 0].values), max(X.iloc[:, 0].values), 1000))
+            sampling_data[1] = pd.DataFrame(np.linspace(min(X.iloc[:, 1].values), max(X.iloc[:, 1].values), 1000))
+
+            fig = plt.figure()
+            ax = fig.gca(projection='3d')
+            ax.scatter(X.iloc[:, 0].values, X.iloc[:, 1].values, y.values, color="blue")
+            ax.plot_trisurf(sampling_data[0], sampling_data[1], self.predict(sampling_data), color="red")
+            plt.show()
+        else:
+            raise ValueError("This method only plots 2D and 3D data and regression hyperplanes. "
+                             + "The X that was passed has {} columns instead of 1 or 2.".format(no_predictors))
 
     def calculate_sums_of_squares(self, X: pd.DataFrame, y: pd.Series):
         TSS = (y - y.mean()).T @ (y - y.mean())     # TSS = (y-mean(y)'(y-mean(y)

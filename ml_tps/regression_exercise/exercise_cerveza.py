@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import os
 from ml_tps.utils.dataframe_utils import get_test_train_X_y
 from ml_tps.utils.regression_utils.linear_regression import LinearRegression
@@ -19,13 +18,18 @@ def main():
     X_train_cajas = X_train.drop(columns=["Distancia"])
     cajas_classifier = LinearRegression()
     cajas_classifier.fit(X=X_train_cajas, y=y_train)
-    cajas_classifier.plot_2d(X=X_train_cajas, y=y_train)
+    cajas_classifier.plot(X=X_train_cajas, y=y_train)
 
     # Predict according to "Distancia"
     X_train_distancia = X_train.drop(columns=["Cajas"])
     distancia_classifier = LinearRegression()
     distancia_classifier.fit(X=X_train_distancia, y=y_train)
-    distancia_classifier.plot_2d(X=X_train_distancia, y=y_train)
+    distancia_classifier.plot(X=X_train_distancia, y=y_train)
+
+    # Multiple regression using both
+    multiple_classifier = LinearRegression()
+    multiple_classifier.fit(X_train, y_train)
+    # multiple_classifier.plot(X_train, y_train)
 
     # Compare models calculating RSS
     cajas_R2 = cajas_classifier.calculate_r2(X_train_cajas, y_train)
