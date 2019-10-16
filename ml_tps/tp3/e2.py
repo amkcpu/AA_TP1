@@ -7,7 +7,7 @@ from sklearn import svm
 
 from ml_tps.tp3.svm_utils import test_svm_configurations, get_svm_accuracy
 from ml_tps.utils.evaluation_utils import getConfusionMatrix, computeAccuracy
-from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, scale_dataset, seperateDatasetObjectiveData
+from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, scale_dataset, separate_dataset_objective_data
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_FILEPATH = f"{dir_path}/../tp3/data/acath.xls"
@@ -26,9 +26,9 @@ def main():
     train, testing_sets = divide_in_training_test_datasets(dataset_scaled, train_pctg=DEFAULT_TRAIN_PCTG)
     cv_set, test = divide_in_training_test_datasets(testing_sets, train_pctg=DEFAULT_CV_PCTG/(1-DEFAULT_TRAIN_PCTG))
 
-    X_train, y_train = seperateDatasetObjectiveData(train, DEFAULT_OBJECTIVE)
-    X_cv_set, y_cv_set = seperateDatasetObjectiveData(cv_set, DEFAULT_OBJECTIVE)
-    X_test, y_test = seperateDatasetObjectiveData(test, DEFAULT_OBJECTIVE)
+    X_train, y_train = separate_dataset_objective_data(train, DEFAULT_OBJECTIVE)
+    X_cv_set, y_cv_set = separate_dataset_objective_data(cv_set, DEFAULT_OBJECTIVE)
+    X_test, y_test = separate_dataset_objective_data(test, DEFAULT_OBJECTIVE)
 
     # b)  Classify categorical variable "sigdz" using default SVC SVM
     words_then = datetime.datetime.now()
