@@ -5,8 +5,8 @@ import numpy as np
 import os
 from sklearn import svm
 
-from ml_tps.tp3.svm_utils import test_svm_configurations, get_svm_accuracy
-from ml_tps.utils.evaluation_utils import getConfusionMatrix, computeAccuracy
+from ml_tps.utils.svm_utils import test_svm_configurations, get_svm_accuracy
+from ml_tps.utils.evaluation_utils import getConfusionMatrix
 from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, scale_dataset, separate_dataset_objective_data
 
 dir_path = os.path.dirname(os.path.realpath(__file__))

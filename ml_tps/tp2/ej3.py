@@ -1,6 +1,6 @@
 # Trabajo practico 2 - Ejercicio 3
 
-from ml_tps.tp2.k_nearest_neighbors import knn
+from ml_tps.utils.k_nearest_neighbors import knn
 from ml_tps.utils.evaluation_utils import *
 from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, \
     rewrite_positives_negatives, delete_non_numeric_columns
