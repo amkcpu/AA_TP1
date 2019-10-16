@@ -1,1 +1,0 @@
-# Self organizing Kohonen maps (SOM)
