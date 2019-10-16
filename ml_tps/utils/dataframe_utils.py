@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import numbers
 from sklearn.preprocessing import MinMaxScaler
+from pandas.api.types import is_numeric_dtype
 
 
 def subdataframe(dataset: pd.DataFrame, attribute: str, value = None):
@@ -23,18 +24,17 @@ def divide_in_training_test_datasets(dataset: pd.DataFrame, train_pctg: float = 
     test = pd.DataFrame([dataset.iloc[i] for i in indexes[split_index:]])
     return train, test
 
-# Rewrite negatives and positives to 0 and 1
-def rewritePositivesNegatives(dataset: pd.DataFrame):
+
+# Rewrite "negative" and "positive" to 0 and 1 respectively
+def rewrite_positives_negatives(dataset: pd.DataFrame):
     for i in dataset.columns:
-        dataset[i] = dataset[i].apply(lambda x: 1 if x == "positive" else 0 if x == "negative" else x)
+        dataset[i] = dataset[i].apply(lambda x: 0 if x == "negative" else 1 if x == "positive" else x)
     return dataset
 
 
-# Based on check whether first element in column is Number or not
-def deleteNonNumericColumns(dataset: pd.DataFrame):
+def delete_non_numeric_columns(dataset: pd.DataFrame):
     for i in dataset.columns:
-        first_element_in_column = dataset[i].iloc[0]
-        if not isinstance(first_element_in_column, numbers.Number):
+        if not is_numeric_dtype(dataset[i]):
             del dataset[i]
     return dataset
 
@@ -47,14 +47,14 @@ def scale_dataset(dataset: pd.DataFrame, objective: str = None, scaling_type: st
         scaler = MinMaxScaler()
 
     if objective is not None:
-        X, y = seperateDatasetObjectiveData(dataset, objective)
+        X, y = separate_dataset_objective_data(dataset, objective)
         X_scaled = pd.DataFrame(scaler.fit_transform(X), index=X.index, columns=X.columns)
         return pd.concat([X_scaled, y], axis=1)
     else:
         return pd.DataFrame(scaler.fit_transform(dataset), index=dataset.index, columns=dataset.columns)
 
 
-def seperateDatasetObjectiveData(dataset: pd.DataFrame, objective: str):
+def separate_dataset_objective_data(dataset: pd.DataFrame, objective: str):
     X = dataset.loc[:, dataset.columns != objective]
     y = dataset[objective]
 
@@ -63,7 +63,21 @@ def seperateDatasetObjectiveData(dataset: pd.DataFrame, objective: str):
 
 def get_test_train_X_y(data: pd.DataFrame, objective: str, train_pctg: float = 0.5):
     train, test = divide_in_training_test_datasets(data, train_pctg)
-    X_train, y_train = seperateDatasetObjectiveData(train, objective)
-    X_test, y_test = seperateDatasetObjectiveData(test, objective)
+    X_train, y_train = separate_dataset_objective_data(train, objective)
+    X_test, y_test = separate_dataset_objective_data(test, objective)
 
     return X_train, y_train, X_test, y_test
+
+
+def add_bias_to_dataset(dataset: pd.DataFrame):
+    ones = pd.Series(np.ones(max(dataset.index) + 1))
+    dataset_copy = dataset.copy()
+    dataset_copy.insert(0, "Bias", ones)  # works inplace
+
+    return dataset_copy
+
+
+def drop_objective_column(training_set: pd.DataFrame, objective: str):
+    training_set_copy = training_set.copy()     # so we don't change original
+    del training_set_copy[objective]
+    return training_set_copy

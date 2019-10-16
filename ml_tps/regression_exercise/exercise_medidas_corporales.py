@@ -70,8 +70,9 @@ def main(TOP):
     filtered_classifier.fit(X=filter_only(X_test,columns), y=y_test)
     print(f"FULL RSS = {full_classifier.rss}")
     print(f"{TOP} VARIABLES RSS = {filtered_classifier.rss}")
-    print(f"FULL R2 = {full_classifier.calculate_adjusted_r2(X_test,y_test)}")
-    print(f"{TOP} VARIABLES R2 = {filtered_classifier.calculate_adjusted_r2(filter_only(X_test,columns),y_test)}")
+    print(f"FULL R2-adj = {full_classifier.calculate_adjusted_r2(X_test,y_test)}")
+    print(f"{TOP} VARIABLES R2-adj = {filtered_classifier.calculate_adjusted_r2(filter_only(X_test,columns),y_test)}")
+    print(columns)
 
 
 if __name__ == '__main__':

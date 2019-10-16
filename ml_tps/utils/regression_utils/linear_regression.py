@@ -1,14 +1,7 @@
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-
-
-def add_bias_to_dataset(dataset: pd.DataFrame):
-    ones = pd.Series(np.ones(max(dataset.index) + 1))
-    dataset_copy = dataset.copy()
-    dataset_copy.insert(0, "Bias", ones)  # works inplace
-
-    return dataset_copy
+from ml_tps.utils.dataframe_utils import add_bias_to_dataset
 
 
 class LinearRegression:

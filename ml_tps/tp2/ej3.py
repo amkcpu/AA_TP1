@@ -3,7 +3,7 @@
 from ml_tps.tp2.k_nearest_neighbors import knn
 from ml_tps.utils.evaluation_utils import *
 from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, \
-    rewritePositivesNegatives, deleteNonNumericColumns
+    rewrite_positives_negatives, delete_non_numeric_columns
 
 DEFAULT_FILEPATH = "data/reviews_sentiment.csv"
 DEFAULT_K = 5
@@ -13,8 +13,8 @@ DEFAULT_OBJECTIVE = "Star Rating"
 
 def main():
     dataset = pd.read_csv(DEFAULT_FILEPATH, sep=';')  # review_sentiments.csv is semicolon-separated (;)
-    dataset = rewritePositivesNegatives(dataset)
-    dataset = deleteNonNumericColumns(dataset)
+    dataset = rewrite_positives_negatives(dataset)
+    dataset = delete_non_numeric_columns(dataset)
 
     # Data set specific changes
     dataset["titleSentiment"] = dataset["titleSentiment"].fillna(dataset["textSentiment"])
