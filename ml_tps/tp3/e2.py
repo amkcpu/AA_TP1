@@ -21,7 +21,7 @@ def main():
     dataset = pd.read_excel(DEFAULT_FILEPATH)
     dataset = dataset.dropna()      # TODO maybe deal with NaN otherwise?
     dataset = dataset.drop("tvdlm", axis=1)   # Drop tvdlm columns which does not add information
-    dataset_scaled = scale_dataset(dataset, objective=DEFAULT_OBJECTIVE, scaling_type="minmax")
+    dataset_scaled = scale_dataset(dataset=dataset, objective=DEFAULT_OBJECTIVE, scaling_type="minmax")
 
     train, testing_sets = divide_in_training_test_datasets(dataset_scaled, train_pctg=DEFAULT_TRAIN_PCTG)
     cv_set, test = divide_in_training_test_datasets(testing_sets, train_pctg=DEFAULT_CV_PCTG/(1-DEFAULT_TRAIN_PCTG))

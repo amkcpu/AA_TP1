@@ -38,11 +38,11 @@ def main():
     data_grass[objective_desc] = grass_description
 
     # Scale image data
-    data_sky = scale_dataset(dataset=data_sky, objective=objective_desc)
-    data_cow = scale_dataset(dataset=data_cow, objective=objective_desc)
-    data_grass = scale_dataset(dataset=data_grass, objective=objective_desc)
-    data_given_test_image = scale_dataset(dataset=data_given_test_image, objective=None)
-    data_own_test_image = scale_dataset(dataset=data_own_test_image, objective=None)
+    data_sky = scale_dataset(dataset=data_sky, objective=objective_desc, scaling_type="minmax")
+    data_cow = scale_dataset(dataset=data_cow, objective=objective_desc, scaling_type="minmax")
+    data_grass = scale_dataset(dataset=data_grass, objective=objective_desc, scaling_type="minmax")
+    data_given_test_image = scale_dataset(dataset=data_given_test_image, objective=None, scaling_type="minmax")
+    data_own_test_image = scale_dataset(dataset=data_own_test_image, objective=None, scaling_type="minmax")
 
     # Merge data for classification
     merged_data = pd.concat([data_sky, data_cow, data_grass], ignore_index=True)

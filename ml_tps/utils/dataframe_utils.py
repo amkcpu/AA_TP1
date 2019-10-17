@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import numbers
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, MaxAbsScaler
 from pandas.api.types import is_numeric_dtype
 
 
@@ -39,12 +39,16 @@ def delete_non_numeric_columns(dataset: pd.DataFrame):
     return dataset
 
 
-# Scales given dataset, not scaling objective column if passed
-def scale_dataset(dataset: pd.DataFrame, objective: str = None, scaling_type: str="minmax"):
-    if scaling_type == "minmax":    # TODO add more/different scaling types
-        scaler = MinMaxScaler()
+# Scales given dataset, not scaling objective column if passed, defaulting to StandardScaler
+def scale_dataset(dataset: pd.DataFrame, scaling_type: str, objective: str = None):
+    if scaling_type == "minmax":
+        scaler = MinMaxScaler()                                     # (X - X.min()) / (X.max() - X.min())
+    elif scaling_type == "maxabs":
+        scaler = MaxAbsScaler()                                     # X / abs(X.max())
+    elif scaling_type == "robust":
+        scaler = RobustScaler(quantile_range=(25.0, 75.0))          # X / X.quantile_range()
     else:
-        scaler = MinMaxScaler()
+        scaler = StandardScaler(with_mean=True, with_std=True)      # (X - X.mean()) / X.std_deviation
 
     if objective is not None:
         X, y = separate_dataset_objective_data(dataset, objective)
