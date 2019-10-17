@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import numbers
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, MaxAbsScaler
 from pandas.api.types import is_numeric_dtype
 
