@@ -35,7 +35,7 @@ def rewrite_positives_negatives(dataset: pd.DataFrame):
 def delete_non_numeric_columns(dataset: pd.DataFrame):
     for i in dataset.columns:
         if not is_numeric_dtype(dataset[i]):
-            del dataset[i]
+            dataset = dataset.drop(i, axis="columns")
     return dataset
 
 
@@ -77,7 +77,5 @@ def add_bias_to_dataset(dataset: pd.DataFrame):
     return dataset_copy
 
 
-def drop_objective_column(training_set: pd.DataFrame, objective: str):
-    training_set_copy = training_set.copy()     # so we don't change original
-    del training_set_copy[objective]
-    return training_set_copy
+def drop_objective_column(dataset: pd.DataFrame, objective: str):
+    return dataset.drop(objective, axis="columns")

@@ -98,7 +98,7 @@ def computeFalsePositiveRate(predictions: pd.Series, actual: pd.Series, averaged
     false_positive_rate = 0
     for i in range(0, len(confusion_matrix_diag)):
         column_sum = confusion_matrix.iloc[:, i].sum()  # amount of examples actually in category
-        classified_correctly = confusion_matrix_diag.iloc.iloc[i]
+        classified_correctly = confusion_matrix_diag[i]
         classified_incorrectly = column_sum - classified_correctly
 
         false_positive_rate += classified_incorrectly / column_sum

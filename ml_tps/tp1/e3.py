@@ -1,27 +1,28 @@
-# Naive Bayes Text classifier
+# TP1 - E3: Naive Bayes Text classifier
 import click
-import numpy as np
 import pandas as pd
 import os  # for looping over files in directory
 import datetime  # measure runtime
 from ml_tps.utils.text_analysis_utils import tf_idf, extract_words_from_text
-from ml_tps.utils.evaluation_utils import f1_score
+from ml_tps.utils.evaluation_utils import f1_score, getConfusionMatrix, computeAccuracy, \
+    computePrecision, computeRecall
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DATA_FILEPATH_DEFAULT = f"{dir_path}/data/aa_bayes.tsv"
-TRAINING_PERCENTAGE_DEFAULT = 0.001
-VALIDATION_AMOUNT_DEFAULT = 50
+TRAINING_PERCENTAGE_DEFAULT = 0.02
+VALIDATION_AMOUNT_DEFAULT = 300
+
 
 @click.command("e1_3")
 @click.option("--data-filepath", default=DATA_FILEPATH_DEFAULT)
 @click.option("--training-percentage", default=TRAINING_PERCENTAGE_DEFAULT)
-@click.option("--training-amount", required=False, type=int)
 @click.option("--keyword-amount", default=20)
 @click.option("--validation-amount", default=VALIDATION_AMOUNT_DEFAULT)
-def main(data_filepath, training_percentage, training_amount, keyword_amount, validation_amount):
+def main(data_filepath, training_percentage, keyword_amount, validation_amount):
+    initial_time = datetime.datetime.now()
+
     # ============== Variable setup ==============
     path = data_filepath  # Set path containing text documents as .txt files
-    # no_of_training_examples = training_percentage * len(data_set)
     no_of_keywords = keyword_amount  # how many highest scoring words on TF-IDF are selected as features
     no_of_validation_examples = validation_amount
 
@@ -29,18 +30,20 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount, va
     # Extract information and save in DataFrame
     data_set = pd.read_csv(path, sep="\t")
     data_set = data_set[data_set["categoria"] != "Noticias destacadas"]  # Leave out massive, unspecific "Noticias destacadas" category
+    objective = "categoria"
+    predictor = "titular"
 
     # Split data set into data subsets by category
     # TODO find smarter way to separate given data sets
-    data_set_deportes = data_set[data_set["categoria"] == "Deportes"]
-    data_set_destacadas = data_set[data_set["categoria"] == "Destacadas"]
-    data_set_economia = data_set[data_set["categoria"] == "Economia"]
-    data_set_entretenimiento = data_set[data_set["categoria"] == "Entretenimiento"]
-    data_set_internacional = data_set[data_set["categoria"] == "Internacional"]
-    data_set_nacional = data_set[data_set["categoria"] == "Nacional"]
-    data_set_salud = data_set[data_set["categoria"] == "Salud"]
-    data_set_ciencia_tecnologia = data_set[data_set["categoria"] == "Ciencia y Tecnologia"]
-    # data_set_dest = data_set[data_set["categoria"] == "Noticias destacadas"]  # Leave out massive, unspecific "Noticias destacadas" category
+    data_set_deportes = data_set[data_set[objective] == "Deportes"]
+    data_set_destacadas = data_set[data_set[objective] == "Destacadas"]
+    data_set_economia = data_set[data_set[objective] == "Economia"]
+    data_set_entretenimiento = data_set[data_set[objective] == "Entretenimiento"]
+    data_set_internacional = data_set[data_set[objective] == "Internacional"]
+    data_set_nacional = data_set[data_set[objective] == "Nacional"]
+    data_set_salud = data_set[data_set[objective] == "Salud"]
+    data_set_ciencia_tecnologia = data_set[data_set[objective] == "Ciencia y Tecnologia"]
+    # data_set_dest = data_set[data_set[objective] == "Noticias destacadas"]  # Leave out massive, unspecific "Noticias destacadas" category
 
     categories = {"Deportes": data_set_deportes,
                   "Destacadas": data_set_destacadas,
@@ -62,51 +65,41 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount, va
 
     for category_name, category_data in categories.items():
         words_this_category = pd.DataFrame()
-
-        for i in range(0, training_amount or int(len(category_data) * training_percentage)):
-            words_one_title = extract_words_from_text(category_data.iat[i, 1], True)
-            words_one_title.columns = [(category_name, i)]
+        counter = 0
+        for row in category_data[predictor]:
+            if counter >= int(len(category_data) * training_percentage):
+                break
+            words_one_title = extract_words_from_text(text=row, prevent_uppercase_duplicates=True)
+            words_one_title.columns = [category_name + "_" + predictor + "_" + str(counter)]
             words_this_category = pd.concat([words_this_category, words_one_title], axis=1)
+            counter += 1
 
         words.append(words_this_category)
 
-    words_now = datetime.datetime.now()
-    print("Runtime of word parsing: ", divmod((words_now - words_then).total_seconds(), 60), "\n")
+    print("Runtime of word parsing:", divmod((datetime.datetime.now() - words_then).total_seconds(), 60), "\n")
 
     # ============== Compute TF-IDF scores and, based on those, choose keywords ==============
-    # TODO only get TF-IDF score for training set to reduce runtime
     then = datetime.datetime.now()  # perf measurement
 
     tf_idf_scores = list()
+    for words_this_category in words:
+        tf_idf_scores.append(tf_idf(words_this_category))  # word frequencies for Bayes classifier, contains NaN
 
-    for i in range(0, len(categories)):
-        tfidf_result = tf_idf(words[i])  # word frequencies for Bayes classifier, contains NaN
-        tf_idf_scores.append(tfidf_result)
+    print("Runtime of TF-IDF:", divmod((datetime.datetime.now() - then).total_seconds(), 60))
 
-    now = datetime.datetime.now()
-    print("Runtime of TF-IDF: ", divmod((now - then).total_seconds(), 60))
-
-    # Get sorted maximum TF-IDF scores for each category, with associated words as indices
-    max_tfidf_scores = list()
-
-    for i in range(0, len(categories)):
-        temp = tf_idf_scores[i].max(axis=1).sort_values(ascending=False)
-        max_tfidf_scores.append(temp)
-
-    # Select x highest scoring words for each category -> feature vectors
+    # Get x words with maximum TF-IDF scores for each category, with associated words as indices
     keywords = list()
+    for scores_this_category in tf_idf_scores:
+        keywords_this_category = scores_this_category.max(axis=1).sort_values(ascending=False).head(no_of_keywords)
+        keywords.append(keywords_this_category)
 
-    for i in range(0, len(categories)):
-        temp = max_tfidf_scores[i].head(no_of_keywords)
-        keywords.append(temp)
-
-    # Retrieve frequency in respective category for each selected word -> parameter
+    # ======= "Train" parameters: Retrieve frequency in respective category for each keyword =======
     keyword_frequency = list()
 
     for i, cat_dataset in enumerate(categories.values()):
         current_category_word_count = pd.DataFrame()
 
-        for j in range(0, training_amount or int(len(cat_dataset) * training_percentage)):
+        for j in range(0, int(len(cat_dataset) * training_percentage)):
             counts_one_example = words[i].iloc[:, j].value_counts()  # get word count in one example (column)
             current_category_word_count = pd.concat([current_category_word_count, counts_one_example], axis=1,
                                                     sort=True)
@@ -118,11 +111,11 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount, va
 
     # ============== Bayes classifier ==============
     validation_examples = data_set.sample(n=no_of_validation_examples)  # random sample from data set
-    # TODO ensure that examples from each category are chosen, to solve problem described below (evaluation, confusion matrix)
     validation_example_predictions = list()
 
     for i in range(0, no_of_validation_examples):  # get one example at a time
-        example_words = extract_words_from_text(validation_examples.iloc[i, 1], True)  # get words for given example
+        example_words = extract_words_from_text(validation_examples[predictor].iat[i],
+                                                True)  # get words for given example
         category_wise_prob = list()
 
         for j in range(0, len(categories)):
@@ -138,7 +131,7 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount, va
                 for k in range(0, len(categories)):  # get entire data set probability for this word
                     try:
                         prob_keyword_in_entire_dataset += keywords[k][word[1].iat[0]] * (
-                                    1 / 8)  # P(P_i) = P(P_i|cat1)*P(cat1) + P(P_i|cat2)*P(cat2) + ...
+                                1 / len(categories))  # P(P_i) = P(P_i|cat1)*P(cat1) + P(P_i|cat2)*P(cat2) + ...
                     except KeyError:
                         continue
 
@@ -149,49 +142,15 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount, va
         predicted_class_name = list(categories.keys())[predicted_class]  # find associated class name
         validation_example_predictions.append(predicted_class_name)
 
-    validation_example_predictions_wrapper = pd.Series(validation_example_predictions)
-
     # ============== Evaluation ==============
-    # confusion matrix
-    # TODO this actually contains an error occurring in small validation samples,
-    #  whereby some categories might not be predicted and the confusion matrix might
-    #  not by square. An error gets thrown when initializing confusion_matrix_diag, but
-    #  already the confusion_matrix itself is faulty.
-    #  Using a large sample, this problem is avoided.
-    validation_examples_actual_category = validation_examples["categoria"]
-    validation_examples_actual_category.index = validation_example_predictions_wrapper.index
-    confusion_matrix = pd.crosstab(validation_example_predictions_wrapper, validation_examples_actual_category,
-                                   rownames=['Actual'], colnames=['Predicted'])
-    confusion_matrix_diag = pd.Series(np.diag(confusion_matrix), index=confusion_matrix.index)  # get diagonal
+    predictions = pd.Series(validation_example_predictions)
+    actual = validation_examples[objective]
+    confusion_matrix = getConfusionMatrix(predictions, actual)
 
-    # TP rate, FP rate
-    true_positive_rate = 0
-    false_positive_rate = 0
-
-    for i in range(0, len(confusion_matrix_diag)):
-        column_sum = confusion_matrix.iloc[:, i].sum()      # amount of examples actually in category
-        classified_correctly = confusion_matrix_diag[i]
-        classified_incorrectly = column_sum - classified_correctly
-
-        true_positive_rate += classified_correctly / column_sum
-        false_positive_rate += classified_incorrectly / column_sum
-
-    true_positive_rate /= len(confusion_matrix_diag)    # for average
-    false_positive_rate /= len(confusion_matrix_diag)   # for average
-
-    # accuracy
-    accuracy = confusion_matrix_diag.sum() / confusion_matrix.sum().sum()
-
-    # precision & recall
-    recall = true_positive_rate
-    precision = 0
-
-    for i in range(0, len(confusion_matrix_diag)):
-        precision += confusion_matrix_diag[i] / confusion_matrix.iloc[:, i].sum()
-
-    precision /= len(confusion_matrix_diag)     # for average
-
-    # compute f1 score
+    # Eval metrics
+    accuracy = computeAccuracy(predictions, actual)
+    precision = computePrecision(predictions, actual)
+    recall = computeRecall(predictions, actual)
     f1 = f1_score(precision, recall)
 
     # ============== Final printout ==============
@@ -201,19 +160,20 @@ def main(data_filepath, training_percentage, training_amount, keyword_amount, va
 
     print("\n========== Classifier info ==========")
     print("Number of training examples: ", current_category_word_count.shape[0], "x", len(categories),
-          "=", current_category_word_count.shape[0]*len(categories))
+          "=", current_category_word_count.shape[0] * len(categories))
     print("Number of validation examples: ", no_of_validation_examples)
 
     print("\n========== Evaluation metrics ==========")
-    print("Accuracy: ", accuracy, "\n")
     print("Confusion matrix:", confusion_matrix)
-    print("\nTrue positive rate (TP): ", true_positive_rate)
-    print("False positive rate (FP): ", false_positive_rate)
-    print("Precision: ", precision)
-    print("Recall (= true positive rate): ", recall)
-    print("F1-score: ", f1)
+    metrics = pd.Series({"Accuracy:": accuracy,
+                         "Precision": precision,
+                         "Recall": recall,
+                         "F1-score": f1})
+    print(pd.DataFrame(metrics, columns=["Evaluation metrics"]))
 
+    print("\nTotal runtime:", divmod((datetime.datetime.now() - initial_time).total_seconds(), 60))
     a = 1
+
 
 if __name__ == "__main__":
     main()
