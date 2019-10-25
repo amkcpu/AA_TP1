@@ -54,8 +54,17 @@ def computeAccuracy(predictions: pd.Series,
 
 
 # TODO Fix TN and assure correctness in multi-class applications
-# Returns parameters as vectors with entry for each objective class
-def getEvaluationParameters(predictions: pd.Series, actual: pd.Series, averaged: bool = True):
+def get_evaluation_metrics(predictions: pd.Series, actual: pd.Series, averaged: bool = True):
+    """Returns four common confusion matrix metrics: FP (false positive), FN (false negative), TP (true positive), TN (true negative).
+
+    If the parameter averaged is True, the method calculates the corresponding rates by averaging the vectors
+    (note that this only applies to multi-class scenarios).
+    Else, the vectors are returned as pandas.Series.
+
+    :param predictions:     Predicted classes for data set
+    :param actual:          Actual classes for data set
+    :param averaged: Specifies whether metrics should be averaged or returned as vectors (only relevant for multi-class scenarios).
+    """
     confusion_matrix, confusion_matrix_diag = getConfMatrix_Diag(predictions, actual)
 
     FP = confusion_matrix.sum(axis=1) - confusion_matrix_diag
@@ -78,8 +87,8 @@ def computeRecall(predictions: pd.Series, actual: pd.Series):
     return computeTruePositiveRate(predictions, actual)
 
 
-# TPR = sum(True positives)/sum(Condition positive)
 def computeTruePositiveRate(predictions: pd.Series, actual: pd.Series, averaged: bool = True):
+    """Returns TPR = sum(True positives) / sum(Condition positive)."""
     confusion_matrix, confusion_matrix_diag = getConfMatrix_Diag(predictions, actual)
 
     tpr = confusion_matrix_diag / confusion_matrix.sum(axis=0)
@@ -90,9 +99,9 @@ def computeTruePositiveRate(predictions: pd.Series, actual: pd.Series, averaged:
     return tpr
 
 
-# FPR = sum(False positives)/sum(Condition negative)
 # TODO Fix computation of False Positive Rate
 def computeFalsePositiveRate(predictions: pd.Series, actual: pd.Series, averaged: bool = True):
+    """Returns FPR = sum(False positives) / sum(Condition negative)."""
     confusion_matrix, confusion_matrix_diag = getConfMatrix_Diag(predictions, actual)
 
     false_positive_rate = 0
@@ -106,7 +115,7 @@ def computeFalsePositiveRate(predictions: pd.Series, actual: pd.Series, averaged
 
     print("FPR (calc) = ", false_positive_rate)
 
-    FP, FN, TP, TN = getEvaluationParameters(predictions, actual, False)
+    FP, FN, TP, TN = get_evaluation_metrics(predictions, actual, False)
 
     condition_negative = FP + TN
     return FP / condition_negative

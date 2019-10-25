@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import os
 from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, scale_dataset, get_test_train_X_y
-from ml_tps.utils.image_utils import read_image_to_dataframe, segment_and_draw
+from ml_tps.utils.image_utils import read_image_to_dataframe, segment_and_draw_image
 from ml_tps.utils.svm_utils import test_svm_configurations
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -79,12 +79,12 @@ def main():
     colors = [blue, red, green]
     classes = [sky_description, cow_description, grass_description]
 
-    segment_and_draw(fitted_classifier=best_svm, image=data_given_test_image,
-                     classes=classes, rgb_colors=colors, height=760, width=1140)
+    segment_and_draw_image(fitted_classifier=best_svm, image=data_given_test_image,
+                           classes=classes, rgb_colors=colors, height=760, width=1140)
 
     # f)  Con el mismo método ya entrenado clasificar todos los pixels de otra imagen
-    segment_and_draw(fitted_classifier=best_svm, image=data_own_test_image,
-                     classes=classes, rgb_colors=colors, height=627, width=1200)
+    segment_and_draw_image(fitted_classifier=best_svm, image=data_own_test_image,
+                           classes=classes, rgb_colors=colors, height=627, width=1200)
 
     a = 1
 

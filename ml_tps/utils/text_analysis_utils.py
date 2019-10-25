@@ -6,9 +6,13 @@ import codecs  # for unicode file reading
 import os  # for looping over files in directory
 
 
-# Returns: number of documents that a given word is found in
-# Input: word_list (containing words in rows, each document is one column), word (to be searched for)
 def no_documents_contain(word_list: pd.DataFrame, word: str) -> int:
+    """Returns the number of documents that a given word is found in from a given group of documents.
+
+    :param word_list: A matrix where each column represents one document,
+                                         and contains all words in said document.
+    :param word: Word to be searched for.
+    """
     counter = 0
     for col in word_list.columns:
         if word in word_list[col].values:
@@ -17,10 +21,14 @@ def no_documents_contain(word_list: pd.DataFrame, word: str) -> int:
     return counter
 
 
-# Term Frequency-Inverse Document Frequency (TF-IDF) algorithm
-# Returns DataFrame (rows: words, columns: documents) with TF-IDF score associated with each word for each example/document
-# Note: Depending on data set size, execution may take a while
 def tf_idf(list_of_words: pd.DataFrame) -> pd.DataFrame:
+    """Implements the Term Frequency-Inverse Document Frequency (TF-IDF) algorithm, used to find important words in a group of documents.
+
+    Note: Depending on data set size, execution can be very time-intensive/costly.
+
+    :param list_of_words: A matrix where each column represents one document, and contains all words in said document.
+    :returns: A matrix where each column represents one document, and contains the TF-IDF score of each word in said document.
+    """
     no_of_documents = len(list_of_words.columns)
 
     # Calculate frequency of words for each document
@@ -52,23 +60,27 @@ def extract_words_from_text(text: str, prevent_uppercase_duplicates: bool = Fals
     return list_of_words
 
 
-# Returns: pandas.DataFrame with documents in columns and the text of the document as in the respective first row
-def extract_text_from_directory(path_name: str):
+def extract_text_from_directory(path_name: str) -> pd.DataFrame:
+    """ Reads text from all documents found in a given directory into a DataFrame.
+
+    :param path_name: Filepath to directory. Can also directly link to a single document.
+    :return: Matrix with documents in columns and the text of the document in the first row.
+    """
     if path_name[-1:] == "/":  # logic for recognizing directories: has to end with "/"
         is_directory = True
     else:
         is_directory = False
 
-    text = pd.DataFrame()  # construct empty DataFrame to be filled later
-    if is_directory:  # assuming directory, write text for each document into one column
+    text = pd.DataFrame()
+    if is_directory:
         i = 0
         for filename in os.listdir(path_name):
+            # read file, using UTF-8 encoding ensuring that international characters can be read
             extracted_text = codecs.open((path_name + filename), encoding="utf-8").read().lower()
-            text.insert(i, filename, [extracted_text])  # write text into new column
+            text.insert(i, filename, [extracted_text])
             i += 1
-    else:  # path_name is now interpreted as directly linking to a file
-        extracted_text = codecs.open(path_name,
-                                     encoding="utf-8").read().lower()  # read file, ensuring Int'l characters can be read
+    else:  # path_name is now interpreted as directly linking to a single file
+        extracted_text = codecs.open(path_name, encoding="utf-8").read().lower()
         text.insert(0, "Document1", extracted_text)
 
     return text

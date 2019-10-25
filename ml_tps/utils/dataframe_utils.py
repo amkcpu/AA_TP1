@@ -24,8 +24,8 @@ def divide_in_training_test_datasets(dataset: pd.DataFrame, train_pctg: float = 
     return train, test
 
 
-# Rewrite "negative" and "positive" to 0 and 1 respectively
 def rewrite_positives_negatives(dataset: pd.DataFrame):
+    """Rewrite "negative" and "positive" to 0 and 1, respectively."""
     for i in dataset.columns:
         dataset[i] = dataset[i].apply(lambda x: 0 if x == "negative" else 1 if x == "positive" else x)
     return dataset
@@ -38,8 +38,13 @@ def delete_non_numeric_columns(dataset: pd.DataFrame):
     return dataset
 
 
-# Scales given dataset, not scaling objective column if passed, defaulting to StandardScaler
 def scale_dataset(dataset: pd.DataFrame, scaling_type: str, objective: str = None):
+    """Scales/normalizes a given dataset.
+
+    :param dataset:         Data set to be scaled.
+    :param scaling_type:    Scaling type used to normalize, defaulting to StandardScaler.
+    :param objective:       If passed, the column with this name will not be scaled.
+    """
     if scaling_type == "minmax":
         scaler = MinMaxScaler()                                     # (X - X.min()) / (X.max() - X.min())
     elif scaling_type == "maxabs":

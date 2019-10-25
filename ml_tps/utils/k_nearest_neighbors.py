@@ -4,8 +4,17 @@ from ml_tps.utils.dataframe_utils import separate_dataset_objective_data
 from ml_tps.utils.distance_utils import euclidean_distance
 
 
-# Input: DataFrame with numeric attributes and label in last column
 def knn(example: pd.Series, training_set: pd.DataFrame, objective: str, k: int, weighted: bool):
+    """Implements k-nearest neighbors algorithm.
+
+    :param example:        Example to be predicted.
+    :param training_set:   Training data wherein neighbors are searched. Attributes have to be numeric.
+    :param objective:      Specifies which column in the training set is the objective column.
+    :param k:              Amount of neighbors considered in KNN.
+    :param weighted:       If true, the prediction weighs the distance of each neighbor to the given example.
+
+    :returns: Prediction for given example using given training data.
+    """
     if not len(example) + 1 == len(training_set.columns):
         raise ValueError("Example does not have the same amount of attributes as training data.")
 
