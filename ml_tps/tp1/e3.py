@@ -28,33 +28,17 @@ def main(data_filepath, training_percentage, keyword_amount, validation_amount):
 
     # ============== Get and process data ==============
     # Extract information and save in DataFrame
-    data_set = pd.read_csv(path, sep="\t")
-    data_set = data_set[data_set["categoria"] != "Noticias destacadas"]  # Leave out massive, unspecific "Noticias destacadas" category
     objective = "categoria"
-    predictor = "titular"
+    predicted = "titular"
+
+    data_set = pd.read_csv(path, sep="\t")
+    data_set = data_set[data_set[objective] != "Noticias destacadas"]  # Leave out massive, unspecific "Noticias destacadas" category
 
     # Split data set into data subsets by category
-    # TODO find smarter way to separate given data sets
-    data_set_deportes = data_set[data_set[objective] == "Deportes"]
-    data_set_destacadas = data_set[data_set[objective] == "Destacadas"]
-    data_set_economia = data_set[data_set[objective] == "Economia"]
-    data_set_entretenimiento = data_set[data_set[objective] == "Entretenimiento"]
-    data_set_internacional = data_set[data_set[objective] == "Internacional"]
-    data_set_nacional = data_set[data_set[objective] == "Nacional"]
-    data_set_salud = data_set[data_set[objective] == "Salud"]
-    data_set_ciencia_tecnologia = data_set[data_set[objective] == "Ciencia y Tecnologia"]
-    # data_set_dest = data_set[data_set[objective] == "Noticias destacadas"]  # Leave out massive, unspecific "Noticias destacadas" category
-
-    categories = {"Deportes": data_set_deportes,
-                  "Destacadas": data_set_destacadas,
-                  "Economia": data_set_economia,
-                  "Entretenimiento": data_set_entretenimiento,
-                  "Internacional": data_set_internacional,
-                  "Nacional": data_set_nacional,
-                  "Salud": data_set_salud,
-                  "Ciencia y Tecnologia": data_set_ciencia_tecnologia,
-                  # "NoticiasDest": data_set_dest
-                  }
+    available_classes = pd.Series(data_set[objective].unique()).dropna().sort_values()
+    categories = {}
+    for cls in available_classes:
+        categories[cls] = data_set[data_set[objective] == cls]
 
     # Extract words from each data (sub-)set
     # TODO Consider implementing Porter stemming to reduce redundancy
@@ -66,11 +50,11 @@ def main(data_filepath, training_percentage, keyword_amount, validation_amount):
     for category_name, category_data in categories.items():
         words_this_category = pd.DataFrame()
         counter = 0
-        for row in category_data[predictor]:
+        for row in category_data[predicted]:
             if counter >= int(len(category_data) * training_percentage):
                 break
             words_one_title = extract_words_from_text(text=row, prevent_uppercase_duplicates=True)
-            words_one_title.columns = [category_name + "_" + predictor + "_" + str(counter)]
+            words_one_title.columns = [category_name + "_" + predicted + "_" + str(counter)]
             words_this_category = pd.concat([words_this_category, words_one_title], axis=1)
             counter += 1
 
@@ -114,7 +98,7 @@ def main(data_filepath, training_percentage, keyword_amount, validation_amount):
     validation_example_predictions = list()
 
     for i in range(0, no_of_validation_examples):  # get one example at a time
-        example_words = extract_words_from_text(validation_examples[predictor].iat[i],
+        example_words = extract_words_from_text(validation_examples[predicted].iat[i],
                                                 True)  # get words for given example
         category_wise_prob = list()
 

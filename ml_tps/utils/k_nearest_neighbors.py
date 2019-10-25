@@ -14,6 +14,8 @@ def knn(example: pd.Series, training_set: pd.DataFrame, objective: str, k: int, 
     :param weighted:       If true, the prediction weighs the distance of each neighbor to the given example.
 
     :returns: Prediction for given example using given training data.
+
+    :raises ValueError: When example does not have the same amount of attributes as training data.
     """
     if not len(example) + 1 == len(training_set.columns):
         raise ValueError("Example does not have the same amount of attributes as training data.")
@@ -43,7 +45,7 @@ def prediction_per_class(nearest_neighbors: pd.DataFrame, weighted: bool):
 
     for this_class in available_classes:
         class_members = nearest_neighbors[nearest_neighbors["Class"] == this_class]
-        if weighted:    # If weighted, use 1/dist^2 as weight
+        if weighted:  # If weighted, use 1/dist^2 as weight
             predicted_classes[this_class] = sum(1 / np.square(class_members["Distance"]))
         else:
             predicted_classes[this_class] = len(class_members["Class"])
@@ -52,6 +54,10 @@ def prediction_per_class(nearest_neighbors: pd.DataFrame, weighted: bool):
 
 
 def choose_predict_class(predicted_classes: pd.Series):
-    # TODO: What if two classes have same frequency?
+    # Print error message if most frequently predicted classes have the same frequency
+    if len(predicted_classes) > 1:
+        if predicted_classes.iloc[0] == predicted_classes.iloc[1]:
+            print("Prediction ambiguous: At least two classes appear equally often as nearest neighbors.")
+
     predicted = predicted_classes.head(1).index
     return predicted[0].astype(int)

@@ -19,7 +19,7 @@ DEFAULT_CV_PCTG = 0.2
 def main():
     # a)  Divide dataset randomly into training and evaluation set
     dataset = pd.read_excel(DEFAULT_FILEPATH)
-    dataset = dataset.dropna()      # TODO maybe deal with NaN otherwise?
+    dataset = dataset.dropna()
     dataset = dataset.drop("tvdlm", axis=1)   # Drop tvdlm columns which does not add information
     dataset_scaled = scale_dataset(dataset=dataset, objective=DEFAULT_OBJECTIVE, scaling_type="minmax")
 
