@@ -55,7 +55,7 @@ def computeAccuracy(predictions: pd.Series,
 
 # TODO Fix TN and assure correctness in multi-class applications
 def get_evaluation_metrics(predictions: pd.Series, actual: pd.Series, averaged: bool = True):
-    """Returns four common confusion matrix metrics: FP (false positive), FN (false negative), TP (true positive), TN (true negative).
+    """Returns four common confusion matrix metrics.
 
     If the parameter averaged is True, the method calculates the corresponding rates by averaging the vectors
     (note that this only applies to multi-class scenarios).
@@ -64,6 +64,7 @@ def get_evaluation_metrics(predictions: pd.Series, actual: pd.Series, averaged: 
     :param predictions:     Predicted classes for data set
     :param actual:          Actual classes for data set
     :param averaged: Specifies whether metrics should be averaged or returned as vectors (only relevant for multi-class scenarios).
+    :returns: FP (false positive), FN (false negative), TP (true positive), TN (true negative).
     """
     confusion_matrix, confusion_matrix_diag = getConfMatrix_Diag(predictions, actual)
 

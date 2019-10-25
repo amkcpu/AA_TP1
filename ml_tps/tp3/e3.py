@@ -10,7 +10,7 @@ from ml_tps.utils.svm_utils import test_svm_configurations
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_FILEPATH = f"{dir_path}/../tp3/data/"
-PCTG_DATA_TO_USE = 0.1      # so that computation does not take too long, use smaller percentage of data
+PCTG_DATA_TO_USE = 0.1  # so that computation does not take too long, use smaller percentage of data
 
 
 def main():
@@ -20,27 +20,25 @@ def main():
     filepath_given_test_image = DEFAULT_FILEPATH + "cow.jpg"
     filepath_own_test_image = DEFAULT_FILEPATH + "field_sky_test_image.jpg"
 
-    sky_description = "Sky"
-    cow_description = "Cow"
-    grass_description = "Grass"
-    objective_desc = "Objective"
+    objective = "Objective"
 
     # a)  Construir un conjunto de datos para entrenamiento, indicando para cada muestra a qué clase pertenece.
     data_sky, discard_sky = divide_in_training_test_datasets(read_image_to_dataframe(filepath_sky), PCTG_DATA_TO_USE)
     data_cow, discard_cow = divide_in_training_test_datasets(read_image_to_dataframe(filepath_cow), PCTG_DATA_TO_USE)
-    data_grass, discard_grass = divide_in_training_test_datasets(read_image_to_dataframe(filepath_grass), PCTG_DATA_TO_USE)
+    data_grass, discard_grass = divide_in_training_test_datasets(read_image_to_dataframe(filepath_grass),
+                                                                 PCTG_DATA_TO_USE)
     data_given_test_image = read_image_to_dataframe(filepath_given_test_image)
     data_own_test_image = read_image_to_dataframe(filepath_own_test_image)
 
     # Add objective columns
-    data_sky[objective_desc] = sky_description
-    data_cow[objective_desc] = cow_description
-    data_grass[objective_desc] = grass_description
+    data_sky[objective] = "Sky"
+    data_cow[objective] = "Cow"
+    data_grass[objective] = "Grass"
 
     # Scale image data
-    data_sky = scale_dataset(dataset=data_sky, objective=objective_desc, scaling_type="minmax")
-    data_cow = scale_dataset(dataset=data_cow, objective=objective_desc, scaling_type="minmax")
-    data_grass = scale_dataset(dataset=data_grass, objective=objective_desc, scaling_type="minmax")
+    data_sky = scale_dataset(dataset=data_sky, objective=objective, scaling_type="minmax")
+    data_cow = scale_dataset(dataset=data_cow, objective=objective, scaling_type="minmax")
+    data_grass = scale_dataset(dataset=data_grass, objective=objective, scaling_type="minmax")
     data_given_test_image = scale_dataset(dataset=data_given_test_image, objective=None, scaling_type="minmax")
     data_own_test_image = scale_dataset(dataset=data_own_test_image, objective=None, scaling_type="minmax")
 
@@ -48,7 +46,7 @@ def main():
     merged_data = pd.concat([data_sky, data_cow, data_grass], ignore_index=True)
 
     # b)  Divide data set into training and cross-validation (cv) set
-    X_train, y_train, X_cv_set, y_cv_set = get_test_train_X_y(merged_data, objective=objective_desc)
+    X_train, y_train, X_cv_set, y_cv_set = get_test_train_X_y(merged_data, objective=objective)
 
     # c)  Utilizar el método SVM para clasificar los pixels del conjunto de prueba, entrenando con el conjunto de entrenamiento.
     kernels = ["rbf", "poly", "linear", "sigmoid"]
@@ -76,15 +74,16 @@ def main():
     red = [255, 0, 0]
     green = [0, 255, 0]
     blue = [0, 0, 255]
-    colors = [blue, red, green]
-    classes = [sky_description, cow_description, grass_description]
+    color_per_class = {"Sky": blue,
+                       "Cow": red,
+                       "Grass": green}
 
     segment_and_draw_image(fitted_classifier=best_svm, image=data_given_test_image,
-                           classes=classes, rgb_colors=colors, height=760, width=1140)
+                           color_per_class=color_per_class, height=760, width=1140)
 
     # f)  Con el mismo método ya entrenado clasificar todos los pixels de otra imagen
     segment_and_draw_image(fitted_classifier=best_svm, image=data_own_test_image,
-                           classes=classes, rgb_colors=colors, height=627, width=1200)
+                           color_per_class=color_per_class, height=627, width=1200)
 
     a = 1
 

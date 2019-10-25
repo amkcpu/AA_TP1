@@ -38,7 +38,7 @@ def delete_non_numeric_columns(dataset: pd.DataFrame):
     return dataset
 
 
-def scale_dataset(dataset: pd.DataFrame, scaling_type: str, objective: str = None):
+def scale_dataset(dataset: pd.DataFrame, scaling_type: str = None, objective: str = None):
     """Scales/normalizes a given dataset.
 
     :param dataset:         Data set to be scaled.
