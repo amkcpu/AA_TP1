@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from ml_tps.utils.formula_utils import sigmoid
+from ml_tps.utils.formula_utils import sigmoid, l1_regularization, l2_regularization
 from ml_tps.utils.dataframe_utils import add_bias_to_dataset
 
 
@@ -13,14 +13,18 @@ class LogisticRegression:
         if initial_theta is not None:
             self.theta.index = range(0, len(initial_theta))
 
-    def fit(self, X: pd.DataFrame, y: pd.Series, alpha: float = 0.0001, iters: int = 1000, tol: float = 0.001):
+    def fit(self, X: pd.DataFrame, y: pd.Series, alpha: float = 0.0001, max_iter: int = 1000, tol: float = 0.001,
+            reg_type: str = None, lb: float = 1.0):
         """Fit logistic regression parameters using gradient descent.
         
         :param X: Training set examples.
         :param y: Training set objective values.
         :param alpha: Specifies learning rate. Defaults to 0.0001.
-        :param iters: Number of iterations of gradient descent algorithm. Defaults to 1000 iterations.
+        :param max_iter: Number of iterations of gradient descent algorithm. Defaults to 1000 iterations.
         :param tol: Maximum error tolerance.
+        :param reg_type: Specify type of regularization to be applied. Supports L1 (absolute) "l1"
+                        and L2 (squared) "l2" regularization.
+        :param lb: Regularization strength parameter commonly known as Lambda.
         """
         if self.theta is None:
             self.theta = pd.Series(np.zeros(len(X.columns) + 1))
@@ -28,8 +32,15 @@ class LogisticRegression:
         X_biased = add_bias_to_dataset(X, normalize_columns=True)
         it = 0
         error = self.cost(X, y)
-        while it < iters and error > tol:
-            theta_update = alpha * (X_biased.T @ (sigmoid(X_biased @ self.theta) - y))
+        while it < max_iter and error > tol:
+            if reg_type == "l1":
+                reg_term = l1_regularization(self.theta, lb)
+            elif reg_type == "l2":
+                reg_term = l2_regularization(self.theta, lb)
+            else:
+                reg_term = 0
+
+            theta_update = alpha * (X_biased.T @ (sigmoid(X_biased @ self.theta) - y)) + reg_term
             bias_update = alpha * sum(sigmoid(X_biased @ self.theta) - y)
 
             self.theta -= pd.Series(bias_update).append(theta_update, ignore_index=True)
