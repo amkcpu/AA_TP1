@@ -48,7 +48,7 @@ class KMeans:
 
         return predictions
 
-    def cost(self, X):
+    def cost(self, X) -> float:
         n = len(X)
         # TODO
 
