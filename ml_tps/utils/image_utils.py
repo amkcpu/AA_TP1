@@ -17,7 +17,15 @@ def colored_image_to_dataframe(raw_image_data):
     return dataframe
 
 
-def dataframe_to_colored_image(image_data: pd.DataFrame, height: int, width: int, draw_image: bool):
+def dataframe_to_colored_image(image_data: pd.DataFrame, height: int, width: int, draw_image: bool = False):
+    """Takes unrolled 2-dimensional DataFrame and turns it to colored image.
+
+    :param image_data: Unrolled data set (2-dimensional). Will be reshaped into 3 dimensions resulting in colored image.
+    :param height: For reshaping the image.
+    :param width: For reshaping the image.
+    :param draw_image: If True, the image will be drawn by the method using Pyplot.
+    :return: Returns reshaped 3-dimensional image (Numpy array).
+    """
     rgb_image = image_data.to_numpy()
     rgb_image = rgb_image.reshape(height, width, 3)
 
@@ -35,7 +43,7 @@ def segment_and_draw_image(fitted_classifier, image: pd.DataFrame, color_per_cla
     :param image:               Image as unrolled pandas.DataFrame (2-dimensional).
     :param color_per_class:     Dict where each key is a class that has an associated RGB color as value.
                                     RGB colors are [value_red, value_green, value_blue] lists
-                                    with each value between 0 and 255.
+                                    with values from 0 to 255 each.
     :param height:              Height of final image for appropriate re-enrolling.
     :param width:               Width of final image for appropriate re-enrolling.
     """
