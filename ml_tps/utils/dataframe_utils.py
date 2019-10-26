@@ -4,7 +4,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, Ma
 from pandas.api.types import is_numeric_dtype
 
 
-def subdataframe(dataset: pd.DataFrame, attribute: str, value = None):
+def subdataframe(dataset: pd.DataFrame, attribute: str, value=None):
     if value is None:
         return [subdataframe(dataset, attribute=attribute, value=value) for value in dataset[attribute].unique()]
     return dataset[dataset[attribute] == value].drop(attribute, axis=1)
@@ -44,15 +44,16 @@ def scale_dataset(dataset: pd.DataFrame, scaling_type: str = None, objective: st
     :param dataset:         Data set to be scaled.
     :param scaling_type:    Scaling type used to normalize, defaulting to StandardScaler.
     :param objective:       If passed, the column with this name will not be scaled.
+    :returns: Scaled data set as pandas.DataFrame.
     """
     if scaling_type == "minmax":
-        scaler = MinMaxScaler()                                     # (X - X.min()) / (X.max() - X.min())
+        scaler = MinMaxScaler()  # (X - X.min()) / (X.max() - X.min())
     elif scaling_type == "maxabs":
-        scaler = MaxAbsScaler()                                     # X / abs(X.max())
+        scaler = MaxAbsScaler()  # X / abs(X.max())
     elif scaling_type == "robust":
-        scaler = RobustScaler(quantile_range=(25.0, 75.0))          # X / X.quantile_range()
+        scaler = RobustScaler(quantile_range=(25.0, 75.0))  # X / X.quantile_range()
     else:
-        scaler = StandardScaler(with_mean=True, with_std=True)      # (X - X.mean()) / X.std_deviation
+        scaler = StandardScaler(with_mean=True, with_std=True)  # (X - X.mean()) / X.std_deviation
 
     if objective is not None:
         X, y = separate_dataset_objective_data(dataset, objective)
