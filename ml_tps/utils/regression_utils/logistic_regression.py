@@ -24,10 +24,13 @@ class LogisticRegression:
             self.theta = pd.Series(np.zeros(len(X.columns) + 1))
 
         it = 0
+        error = self.cost(X, y)
         while it < iters and error > tol:
             theta_update = alpha * (X.T @ (sigmoid(X @ self.theta) - y))
             bias_update = alpha * sum(sigmoid(X @ self.theta) - y)
+
             self.theta -= bias_update.append(theta_update)
+
             error = self.cost(X, y)
             it += 1
 
