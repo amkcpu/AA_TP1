@@ -10,3 +10,7 @@ def euclidean_distance(x1: pd.Series, x2: pd.Series):
         raise ArithmeticError("Euclidean Distance: Vectors must have same length.")
 
     return np.sqrt(sum(np.square(x1 - x2)))
+
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
