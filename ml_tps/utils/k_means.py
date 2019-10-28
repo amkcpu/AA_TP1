@@ -48,11 +48,14 @@ class KMeans:
         :param initial_centroids: If so wished, the starting centroids can be passed.
         """
         if initial_centroids is not None:
-            dim_cent = len(initial_centroids.columns)
-            dim_data = len(X.columns)
-            if not dim_cent == dim_data:
-                raise ValueError("initial_centroids have different dimension ({0}) than the data set ({1}).".format(dim_cent, dim_data))
+            if not len(initial_centroids.columns) == len(X.columns):
+                raise ValueError("The centroids that were passed (initial_centroids) have a different dimension ({0}) "
+                                 "than the data set ({1}).".format(len(initial_centroids.columns), len(X.columns)))
             self.centroids = initial_centroids
+        elif self.centroids is not None:
+            if not len(self.centroids.columns) == len(X.columns):
+                raise ValueError("Already assigned centroids have a different dimension ({0}) "
+                                 "than the data set that was passed ({1}).".format(len(self.centroids.columns), len(X.columns)))
         else:
             self.centroids = initialize_centroids(X, k)
 
@@ -67,7 +70,7 @@ class KMeans:
             error = self.cost(X_assigned)
             it += 1
             if self.centroids.equals(centroids_prev):    # break if centroids are stable
-                print("Centroids have not been updated. K-Means finished.")
+                print("Centroids stable. K-Means finished.")
                 break
 
         print("Finished after {} iterations.".format(it))
@@ -85,11 +88,14 @@ class KMeans:
         return pd.Series(predictions, index=X.index)
 
     def cost(self, X_assigned) -> float:
-        n = len(X_assigned)
+        if self.centroids is None:
+            raise ValueError("Model has not been fitted yet (centroids = None).")
+
         costs = list()
         for idx, row in self.centroids.iterrows():
             assigned_rows = X_assigned[X_assigned["Centroid"] == idx].drop("Centroid", axis=1)
-            cost = sum([euclidean_distance(row, r) for i, r in assigned_rows.iterrows()]) / n
+            cost = sum([euclidean_distance(row, r) for i, r in assigned_rows.iterrows()])
             costs.append(cost)
 
-        return sum(costs)
+        n = len(X_assigned)
+        return sum(costs) / n
