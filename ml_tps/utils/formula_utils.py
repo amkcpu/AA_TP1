@@ -16,21 +16,21 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
-def l1_regularization(theta: pd.DataFrame, lb: float):
+def l1_regularization(theta: pd.DataFrame, lam: float):
     """L1 regularization which uses absolute values.
 
     :param theta: Model parameters.
-    :param lb: Regularization strength parameter commonly known as Lambda.
+    :param lam: Regularization strength parameter commonly known as Lambda.
     :return: Regularization term for parameter estimation.
     """
-    return lb * np.abs(theta).sum().sum()
+    return lam * np.abs(theta).sum().sum()
 
 
-def l2_regularization(theta: pd.DataFrame, lb: float):
+def l2_regularization(theta: pd.DataFrame, lam: float):
     """L2 regularization which uses squared values.
 
     :param theta: Model parameters.
-    :param lb: Regularization strength parameter commonly known as Lambda.
+    :param lam: Regularization strength parameter commonly known as Lambda.
     :return: Regularization term for parameter estimation.
     """
-    return lb * np.square(theta).sum().sum()
+    return lam * np.square(theta).sum().sum()

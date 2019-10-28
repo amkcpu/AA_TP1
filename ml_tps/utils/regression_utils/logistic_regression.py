@@ -14,7 +14,7 @@ class LogisticRegression:
             self.theta.index = range(0, len(initial_theta))
 
     def fit(self, X: pd.DataFrame, y: pd.Series, alpha: float = 0.0001, max_iter: int = 1000, tol: float = 0.001,
-            reg_type: str = None, lb: float = 1.0):
+            reg_type: str = None, lam: float = 1.0):
         """Fit logistic regression parameters using gradient descent.
         
         :param X: Training set examples.
@@ -24,7 +24,7 @@ class LogisticRegression:
         :param tol: Maximum error tolerance.
         :param reg_type: Specify type of regularization to be applied. Supports L1 (absolute) "l1"
                         and L2 (squared) "l2" regularization.
-        :param lb: Regularization strength parameter commonly known as Lambda.
+        :param lam: Regularization strength parameter commonly known as Lambda.
         """
         if self.theta is None:
             self.theta = pd.Series(np.zeros(len(X.columns) + 1))
@@ -32,13 +32,12 @@ class LogisticRegression:
         X_biased = add_bias_to_dataset(X, normalize_columns=True)
         it = 0
         error = self.cost(X, y)
+        reg_term = 0
         while it < max_iter and error > tol:
             if reg_type == "l1":
-                reg_term = l1_regularization(self.theta, lb)
+                reg_term = l1_regularization(self.theta, lam)
             elif reg_type == "l2":
-                reg_term = l2_regularization(self.theta, lb)
-            else:
-                reg_term = 0
+                reg_term = l2_regularization(self.theta, lam)
 
             theta_update = alpha * (X_biased.T @ (sigmoid(X_biased @ self.theta) - y)) + reg_term
             bias_update = alpha * sum(sigmoid(X_biased @ self.theta) - y)
@@ -64,15 +63,16 @@ class LogisticRegression:
         predictions = sigmoid(X_biased @ self.theta)
         return predictions.apply(lambda x: 0 if x < 0.5 else 1)
 
-    def cost(self, X, y):
+    def cost(self, X: pd.DataFrame, y: pd.Series):
         """Logistic regression cost function.
 
-        :param X: Given point.
-        :param y: Given class for example point.
-        :return: Cost of one single example using trained theta parameters.
+        :param X: Training set examples.
+        :param y: Training set objective values.
+        :return: Cost of given examples using trained theta parameters.
         """
         if self.theta is None:
             raise ValueError("Model has not been fitted yet (regression parameters theta = None).")
 
-        X_biased = add_bias_to_dataset(X, normalize_columns=True)
-        return -y.T @ np.log(sigmoid(X_biased @ self.theta)) - (1 - y).T @ np.log(1 - sigmoid(X_biased @ self.theta))
+        n = len(X)
+        X_biased = add_bias_to_dataset(dataset=X, normalize_columns=True)
+        return -y.T @ np.log(sigmoid(X_biased @ self.theta)) - (1 - y).T @ np.log(1 - sigmoid(X_biased @ self.theta)) / n
