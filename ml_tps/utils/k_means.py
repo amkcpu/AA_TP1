@@ -3,16 +3,17 @@ import numpy as np
 from ml_tps.utils.distance_utils import euclidean_distance
 
 
-def initialize_centroids(X: pd.DataFrame, k: int):
+def pick_centroids(X: pd.DataFrame, k: int) -> pd.DataFrame:
     """Randomly picks k examples from data set as centroids."""
     indexes = np.arange(len(X))
     np.random.shuffle(indexes)
     indexes = list(indexes)
     centroids = pd.DataFrame([X.iloc[i] for i in indexes[:k]], index=range(1, k+1))
+
     return centroids
 
 
-def assign_centroids(X: pd.DataFrame, centroids: pd.DataFrame):
+def assign_centroids(X: pd.DataFrame, centroids: pd.DataFrame) -> pd.DataFrame:
     """Assigns the nearest centroid to each training example."""
     X_assigned = X.copy()
 
@@ -24,7 +25,7 @@ def assign_centroids(X: pd.DataFrame, centroids: pd.DataFrame):
     return X_assigned
 
 
-def move_centroids(X_assigned: pd.DataFrame, centroids: pd.DataFrame):
+def move_centroids(X_assigned: pd.DataFrame, centroids: pd.DataFrame) -> pd.DataFrame:
     """Moves the centroids to the mean of their corresponding examples."""
     for idx, row in centroids.iterrows():
         assigned_rows = X_assigned[X_assigned["Centroid"] == idx]
@@ -38,7 +39,7 @@ class KMeans:
     def __init__(self, initial_centroids: pd.DataFrame = None):
         self.centroids = initial_centroids
 
-    def fit(self, X: pd.DataFrame, k: int, iters: int = 1000, tol: float = 0.001, initial_centroids: pd.DataFrame = None):
+    def fit(self, X: pd.DataFrame, k: int, iters: int = 1000, tol: float = 0.001, initial_centroids: pd.DataFrame = None) -> None:
         """Clusters a given data set into k clusters using the K-Means algorithm.
 
         :param X: Data set on which to perform clustering.
@@ -57,7 +58,7 @@ class KMeans:
                 raise ValueError("Already assigned centroids have a different dimension ({0}) "
                                  "than the data set that was passed ({1}).".format(len(self.centroids.columns), len(X.columns)))
         else:
-            self.centroids = initialize_centroids(X, k)
+            self.centroids = pick_centroids(X, k)
 
         X_assigned = assign_centroids(X, self.centroids)
         error = self.cost(X_assigned)
@@ -76,7 +77,7 @@ class KMeans:
         print("Finished after {} iterations.".format(it))
         print("Converged with error (cost) = {}.".format(error))
 
-    def predict(self, X: pd.DataFrame):
+    def predict(self, X: pd.DataFrame) -> pd.Series:
         if self.centroids is None:
             raise ValueError("Model has not been fitted yet (centroids = None).")
 
