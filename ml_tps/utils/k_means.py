@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from matplotlib import pyplot as plt
 from ml_tps.utils.distance_utils import euclidean_distance
 
 
@@ -81,12 +82,8 @@ class KMeans:
         if self.centroids is None:
             raise ValueError("Model has not been fitted yet (centroids = None).")
 
-        predictions = list()
-        for idx, row in X.iterrows():
-            distances = {i: euclidean_distance(row, r) for i, r in self.centroids.iterrows()}
-            predictions.append(min(distances, key=distances.get))
-
-        return pd.Series(predictions, index=X.index)
+        X_assigned = assign_centroids(X, self.centroids)
+        return X_assigned["Centroid"]
 
     def cost(self, X_assigned) -> float:
         if self.centroids is None:
@@ -100,3 +97,13 @@ class KMeans:
 
         n = len(X_assigned)
         return sum(costs) / n
+
+    def plot(self, X_axis: str, y_axis: str, dataset: pd.DataFrame, plot_centroids: bool = True):
+        if self.centroids is None:
+            raise ValueError("Model has not been fitted yet (centroids = None).")
+
+        X_assigned = assign_centroids(X=dataset, centroids=self.centroids)
+        plt.scatter(X_assigned[X_axis], X_assigned[y_axis], c=X_assigned["Centroid"], s=50, cmap="viridis")
+        if plot_centroids:
+            plt.scatter(self.centroids[X_axis], self.centroids[y_axis], c="black", marker="x", s=50)
+        plt.show()
