@@ -103,7 +103,7 @@ class KMeans:
             raise ValueError("Model has not been fitted yet (centroids = None).")
 
         X_assigned = assign_centroids(X=dataset, centroids=self.centroids)
-        plt.scatter(X_assigned[X_axis], X_assigned[y_axis], c=X_assigned["Centroid"], s=50, cmap="viridis")
+        plt.scatter(X_assigned[X_axis], X_assigned[y_axis], c=X_assigned["Centroid"], s=50, cmap="Set3")
         if plot_centroids:
             plt.scatter(self.centroids[X_axis], self.centroids[y_axis], c="black", marker="x", s=50)
         plt.show()
