@@ -30,7 +30,7 @@ def move_centroids(X_assigned: pd.DataFrame, centroids: pd.DataFrame) -> pd.Data
     """Moves the centroids to the mean of their corresponding examples."""
     for idx, row in centroids.iterrows():
         assigned_rows = X_assigned[X_assigned["Centroid"] == idx]
-        centroids.at[idx, :] = assigned_rows.drop("Centroid", axis=1).mean()
+        centroids.at[idx, :] = assigned_rows.drop("Centroid", axis=1).mean(axis=0)
 
     return centroids
 
@@ -40,7 +40,7 @@ class KMeans:
     def __init__(self, initial_centroids: pd.DataFrame = None):
         self.centroids = initial_centroids
 
-    def fit(self, X: pd.DataFrame, k: int, iters: int = 1000, tol: float = 0.001,
+    def fit(self, X: pd.DataFrame, k: int, iters: int = 300, tol: float = 0.0001,
             initial_centroids: pd.DataFrame = None) -> None:
         """Clusters a given data set into k clusters using the K-Means algorithm.
 
@@ -91,29 +91,32 @@ class KMeans:
         X_assigned = assign_centroids(X, self.centroids)
         return X_assigned["Centroid"]
 
-    def cost(self, X_assigned: pd.DataFrame) -> float:
+    def cost(self, X_assigned: pd.DataFrame, costs_per_class: bool = False):
         """K-Means cost function based on distances between data points and their assigned centroids.
 
         :param X_assigned: DataFrame containing examples in rows as well as the column "Centroid"
                             containing their assigned centroid.
-        :return: Normalized sum of the distances of each data point to their assigned centroids.
+        :param costs_per_class: If true, costs are returned as dict containing cost for each centroid.
+        :return: Sum of distances of each data point to their assigned centroids
+                or dict containing cost for each centroid separately.
         """
         if self.centroids is None:
             raise ValueError("Model has not been fitted yet (centroids = None).")
 
-        costs = list()
+        costs = dict()
         for idx, row in self.centroids.iterrows():
             assigned_rows = X_assigned[X_assigned["Centroid"] == idx].drop("Centroid", axis=1)
-            cost = sum([euclidean_distance(row, r) for i, r in assigned_rows.iterrows()])
-            costs.append(cost)
+            costs[idx] = sum([euclidean_distance(row, r) for i, r in assigned_rows.iterrows()]) / len(assigned_rows)
 
-        n = len(X_assigned)
-        return sum(costs) / n
+        if costs_per_class:
+            return costs
+        else:
+            return sum(costs.values())
 
-    def plot(self, X_axis: str, y_axis: str, dataset: pd.DataFrame, plot_centroids: bool = True) -> None:
+    def plot(self, x_axis: str, y_axis: str, dataset: pd.DataFrame, plot_centroids: bool = True) -> None:
         '''Plots given data set along two specified dimensions, clustered around previously fit centroids (indicated by their color).
 
-        :param X_axis: String specifying which column in the data set is to be used as x axis.
+        :param x_axis: String specifying which column in the data set is to be used as x axis.
         :param y_axis: String specifying which column in the data set is to be used as y axis.
         :param dataset: Data set to be clustered and plotted.
         :param plot_centroids: Boolean specifying whether the previously fit centroids are to be plotted as well.
@@ -122,9 +125,9 @@ class KMeans:
             raise ValueError("Model has not been fitted yet (centroids = None).")
 
         X_assigned = assign_centroids(X=dataset, centroids=self.centroids)
-        plt.scatter(X_assigned[X_axis], X_assigned[y_axis], c=X_assigned["Centroid"], s=50, cmap="Set3")
+        plt.scatter(X_assigned[x_axis], X_assigned[y_axis], c=X_assigned["Centroid"], s=50, cmap="Set3")
 
         if plot_centroids:
-            plt.scatter(self.centroids[X_axis], self.centroids[y_axis], c="black", marker="x", s=50)
+            plt.scatter(self.centroids[x_axis], self.centroids[y_axis], c="black", marker="x", s=50)
 
         plt.show()
