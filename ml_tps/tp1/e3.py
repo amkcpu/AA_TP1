@@ -3,8 +3,8 @@ import click
 import pandas as pd
 import os  # for looping over files in directory
 import datetime  # measure runtime
-from ml_tps.utils.text_analysis_utils import tf_idf, extract_words_from_text
-from ml_tps.utils.evaluation_utils import f1_score, getConfusionMatrix, computeAccuracy, \
+from ml_tps.utils.text_processing import tf_idf, extract_words_from_text
+from ml_tps.utils.evaluation import f1_score, getConfusionMatrix, computeAccuracy, \
     computePrecision, computeRecall
 
 dir_path = os.path.dirname(os.path.realpath(__file__))

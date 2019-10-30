@@ -1,11 +1,11 @@
 # Trabajo practico 2 - Ejercicio 2
-from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets
-from ml_tps.utils.decision_tree_utils import DecisionTree, RandomForest
+from ml_tps.utils.data_processing import divide_in_training_test_datasets
+from ml_tps.algorithms.decision_tree import DecisionTree, RandomForest
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-from ml_tps.utils.evaluation_utils import getConfusionMatrix, computeAccuracy, evalPreprocessing
+from ml_tps.utils.evaluation import getConfusionMatrix, computeAccuracy
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_FILEPATH = f"{dir_path}/../tp2/data/titanic.csv"

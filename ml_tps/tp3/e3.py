@@ -4,9 +4,9 @@
 import pandas as pd
 import numpy as np
 import os
-from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, scale_dataset, get_test_train_X_y
-from ml_tps.utils.image_utils import read_image_to_dataframe, segment_and_draw_image
-from ml_tps.utils.svm_utils import test_svm_configurations
+from ml_tps.utils.data_processing import divide_in_training_test_datasets, scale_dataset, get_test_train_X_y
+from ml_tps.utils.image_processing import read_image_to_dataframe, segment_and_draw_image
+from ml_tps.utils.hyperparameter_tuning import test_svm_configurations
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_FILEPATH = f"{dir_path}/../tp3/data/"

@@ -5,9 +5,9 @@ import numpy as np
 import os
 from sklearn import svm
 
-from ml_tps.utils.svm_utils import test_svm_configurations, get_svm_accuracy
-from ml_tps.utils.evaluation_utils import getConfusionMatrix
-from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, scale_dataset, separate_dataset_objective_data
+from ml_tps.utils.hyperparameter_tuning import test_svm_configurations
+from ml_tps.utils.evaluation import getConfusionMatrix, computeAccuracy
+from ml_tps.utils.data_processing import divide_in_training_test_datasets, scale_dataset, separate_dataset_objective_data
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_FILEPATH = f"{dir_path}/../tp3/data/acath.xls"
@@ -39,8 +39,11 @@ def main():
 
     predictions_cv1 = pd.Series(clf1.predict(X_cv_set).T)
     confusion_matrix = getConfusionMatrix(predictions_cv1, y_cv_set)
-    accuracy_train1 = get_svm_accuracy(fitted_classifier=clf1, X=X_train, y=y_train)
-    accuracy_cv1 = get_svm_accuracy(fitted_classifier=clf1, X=X_cv_set, y=y_cv_set)
+    predictions_train1 = pd.Series(clf1.predict(X_train))
+    accuracy_train1 = computeAccuracy(predictions_train1, y_train)
+
+    predictions_cv1 = pd.Series(clf1.predict(X_cv_set))
+    accuracy_cv1 = computeAccuracy(predictions_cv1, y_cv_set)
 
     data_default_svm = pd.DataFrame(columns=["Kernel", "C value", "Training set accuracy", "CV set accuracy"])
     data_default_svm.loc[0] = [kernel1, c_value1, accuracy_train1, accuracy_cv1]
@@ -58,7 +61,8 @@ def main():
 
     # Calculate real performance on test set
     best_svm.fit(X_train, y_train)
-    winner_test_accuracy = get_svm_accuracy(fitted_classifier=best_svm, X=X_test, y=y_test)
+    predictions_best_clf = pd.Series(best_svm.predict(X_test))
+    winner_test_accuracy = computeAccuracy(predictions_best_clf, y_test)
 
     a = 1
 

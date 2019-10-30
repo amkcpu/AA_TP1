@@ -2,7 +2,7 @@
 # a) Implement decision tree with Shannon entropy
 # b) Add additional training example and reconstruct decision tree
 
-from ml_tps.utils.decision_tree_utils import DecisionTree
+from ml_tps.algorithms.decision_tree import DecisionTree
 import pandas as pd
 
 DEFAULT_FILEPATH = "data/deporte.csv"

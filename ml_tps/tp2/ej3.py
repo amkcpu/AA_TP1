@@ -1,9 +1,8 @@
 # Trabajo practico 2 - Ejercicio 3
 
-import pandas as pd
-from ml_tps.utils.k_nearest_neighbors import knn
-from ml_tps.utils.evaluation_utils import *
-from ml_tps.utils.dataframe_utils import divide_in_training_test_datasets, \
+from ml_tps.algorithms.k_nearest_neighbors import knn
+from ml_tps.utils.evaluation import *
+from ml_tps.utils.data_processing import divide_in_training_test_datasets, \
     rewrite_positives_negatives, delete_non_numeric_columns, separate_dataset_objective_data
 import datetime
 

@@ -1,7 +1,6 @@
 import numpy as np
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from ml_tps.tp3.space_generation import BooleanPlane, Point
 
 
@@ -45,7 +44,7 @@ def e1(epoch=5000, points_count=100, eta=0.05, min_error=0.0):
     #            }
     # net = mainNet(override)
 
-    from ml_tps.utils.neural_net_utils.SimplePerceptron import SimplePerceptron, Pattern
+    from ml_tps.algorithms.simple_perceptron import SimplePerceptron, Pattern
     patterns = [Pattern([point.x, point.y, point.z], 1 if plane.classify(point) else -1) for point in points]
     perceptron = SimplePerceptron(3, min_error, eta, patterns, epoch)
     perceptron.train()

@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from ml_tps.utils.dataframe_utils import separate_dataset_objective_data
+from ml_tps.utils.data_processing import separate_dataset_objective_data
 from ml_tps.utils.distance_utils import euclidean_distance
 
 
