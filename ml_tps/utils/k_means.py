@@ -4,12 +4,24 @@ from matplotlib import pyplot as plt
 from ml_tps.utils.distance_utils import euclidean_distance
 
 
-def pick_centroids(X: pd.DataFrame, k: int) -> pd.DataFrame:
+def initialize_centroids(X: pd.DataFrame, k: int,
+                         initial_centroids: pd.DataFrame = None,
+                         current_centroids: pd.DataFrame = None) -> pd.DataFrame:
     """Randomly picks k examples from data set as centroids."""
-    indexes = np.arange(len(X))
-    np.random.shuffle(indexes)
-    indexes = list(indexes)
-    centroids = pd.DataFrame([X.iloc[i] for i in indexes[:k]], index=range(1, k+1))
+    if initial_centroids is not None:
+        if not len(initial_centroids.columns) == len(X.columns):
+            raise ValueError("The centroids that were passed (initial_centroids) have a different dimension ({0}) "
+                             "than the data set ({1}).".format(len(initial_centroids.columns), len(X.columns)))
+        centroids = initial_centroids   # current centroids are overridden
+    elif current_centroids is not None:
+        if not len(current_centroids.columns) == len(X.columns):
+            raise ValueError("Already assigned centroids have a different dimension ({0}) than the data set "
+                             "that was passed ({1}).".format(len(current_centroids.columns), len(X.columns)))
+    else:
+        indexes = np.arange(len(X))
+        np.random.shuffle(indexes)
+        indexes = list(indexes)
+        centroids = pd.DataFrame([X.iloc[i] for i in indexes[:k]], index=range(1, k+1))
 
     return centroids
 
@@ -50,17 +62,7 @@ class KMeans:
         :param tol: Stop criteria for clustering. If the clustering error falls below the tolerance, clustering is stopped.
         :param initial_centroids: If so wished, the starting centroids can be passed.
         """
-        if initial_centroids is not None:
-            if not len(initial_centroids.columns) == len(X.columns):
-                raise ValueError("The centroids that were passed (initial_centroids) have a different dimension ({0}) "
-                                 "than the data set ({1}).".format(len(initial_centroids.columns), len(X.columns)))
-            self.centroids = initial_centroids
-        elif self.centroids is not None:
-            if not len(self.centroids.columns) == len(X.columns):
-                raise ValueError("Already assigned centroids have a different dimension ({0}) "
-                                 "than the data set that was passed ({1}).".format(len(self.centroids.columns), len(X.columns)))
-        else:
-            self.centroids = pick_centroids(X, k)
+        self.centroids = initialize_centroids(X, k, initial_centroids=initial_centroids, current_centroids=self.centroids)
 
         X_assigned = assign_centroids(X, self.centroids)
         error = self.cost(X_assigned)
