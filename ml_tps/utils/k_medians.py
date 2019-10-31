@@ -30,7 +30,7 @@ class KMedians:
         self.centroids = initial_centroids
 
     def fit(self, X: pd.DataFrame, k: int, iters: int = 300, tol: float = 0.0001,
-            initial_centroids: pd.DataFrame = None) -> None:
+            initial_centroids: pd.DataFrame = None, plot_x_axis: str = None, plot_y_axis: str = None) -> None:
         """Clusters a given data set into k clusters using the K-Medians algorithm.
 
         :param X: Data set on which to perform clustering.
@@ -38,6 +38,8 @@ class KMedians:
         :param iters: Maximum number of iterations before clustering is stopped.
         :param tol: Stop criteria for clustering. If the clustering error falls below the tolerance, clustering is stopped.
         :param initial_centroids: If so wished, the starting centroids can be passed.
+        :param plot_x_axis: If this and plot_y_axis is passed, the data set is plotted on each iteration using these values as x and y axes.
+        :param plot_y_axis: If this and plot_x_axis is passed, the data set is plotted on each iteration using these values as x and y axes.
         """
         self.centroids = initialize_centroids(X, k, initial_centroids=initial_centroids, current_centroids=self.centroids)
 
@@ -45,15 +47,18 @@ class KMedians:
         error = self.cost(X_assigned)
         it = 0
         while it < iters and error > tol:
+            if (plot_x_axis is not None) and (plot_y_axis is not None):
+                self.plot(x_axis=plot_x_axis, y_axis=plot_y_axis, dataset=X, plot_centroids=True)
+
             centroids_prev = self.centroids.copy()
             self.centroids = move_centroids(X_assigned, self.centroids)
             X_assigned = assign_centroids(X, self.centroids)
 
             error = self.cost(X_assigned)
-            it += 1
             if self.centroids.equals(centroids_prev):    # break if centroids are stable
                 print("Centroids stable. K-Medians finished.")
                 break
+            it += 1
 
         print("Finished after {} iterations.".format(it))
         print("Converged with error (cost) = {}.".format(error))
