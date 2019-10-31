@@ -53,10 +53,10 @@ def tf_idf(list_of_words: pd.DataFrame) -> pd.DataFrame:
     return tf_idf_scores_result
 
 
-def extract_words_from_text(text: str, prevent_uppercase_duplicates: bool = False):
+def extract_words_from_text(text: str, prevent_uppercase_duplicates: bool = False) -> pd.Series:
     if prevent_uppercase_duplicates:
         text = text.lower()
-    list_of_words = pd.DataFrame(re.findall(r"[\w']+", text))  # Using RegExp
+    list_of_words = pd.Series(re.findall(r"[\w']+", text))  # Using RegExp
     return list_of_words
 
 
@@ -84,3 +84,93 @@ def extract_text_from_directory(path_name: str) -> pd.DataFrame:
         text.insert(0, "Document1", extracted_text)
 
     return text
+
+
+def no_unique_words(text: str, normalize: bool, prevent_uppercase_duplicates: bool = True):
+    """Number of unique words within a body of text, if required relative count.
+
+    :param text: Text to be analized as String.
+    :param normalize: If true, returns relative count (frequency).
+    :param prevent_uppercase_duplicates: Sets text to lower case to prevent having differently-cased,
+                        but identical words appearing as unique words.
+    """
+    extracted_words = extract_words_from_text(text, prevent_uppercase_duplicates)
+
+    if normalize:
+        return int(extracted_words.nunique()[0]) / len(extracted_words)
+    else:
+        return int(extracted_words.nunique()[0])
+
+
+def word_frequency(text: str, list_of_words: list, normalize: bool, prevent_uppercase_duplicates: bool = True) -> pd.Series:
+    """Return frequency (absolute or relative) of appearances of given words in given text.
+
+    :param text: Text to be analyzed.
+    :param list_of_words: List containing all words that are to be searched for in the text.
+    :param normalize: If true, relative frequency is returned. Else, the absolute frequency.
+    :param prevent_uppercase_duplicates: Sets text to lower case to prevent having differently-cased,
+                        but identical words appearing as unique words.
+    :returns: Series containing the passed words as index and the word frequencies as values.
+    """
+    counts = extract_words_from_text(text, prevent_uppercase_duplicates).value_counts(normalize=normalize)
+    freq = pd.Series()
+    for word in list_of_words:
+        if prevent_uppercase_duplicates:
+            word = word.lower()
+        try:
+            freq_this_word = counts[word]
+        except KeyError:
+            freq_this_word = 0
+        freq[word] = freq_this_word
+
+    return freq
+
+
+def most_frequent_words(text: str, no_words: int, normalize: bool, prevent_uppercase_duplicates: bool = True) -> pd.Series:
+    """Returns list of most frequent words.
+
+    :param text: Text to be analyzed.
+    :param no_words: How many words are to be returned.
+    :param normalize: If true, relative frequency is returned. Else, the absolute frequency.
+    :param prevent_uppercase_duplicates: Sets text to lower case to prevent having differently-cased,
+                        but identical words appearing as unique words.
+    :return: Series containing the most frequent words as index and the word frequencies as values.
+    """
+    words = extract_words_from_text(text, prevent_uppercase_duplicates)
+    val_counts = words.value_counts(ascending=False, normalize=normalize)
+    return val_counts.head(no_words)
+
+
+def no_words_with_word_part(text: str, word_part: str, mode: str, normalize: bool, prevent_uppercase_duplicates: bool = True):
+    """Searches for occurrences of given part of a word in the entire text.
+
+    Can be used, for example, to search for English adverbs (ending in "-ly" - note that this approach is,
+    of course, inherently error-prone).
+
+    :param text: Text to be analyzed.
+    :param word_part: String that is interpreted as part of a word and searched in the entire text.
+    :param mode: Where in the words the word part is to be searched. Supports "beginning", "ending" and "containing".
+    :param normalize: If true, relative frequency is returned. Else, the absolute frequency.
+    :param prevent_uppercase_duplicates: Sets text to lower case to prevent having differently-cased,
+                        but identical words appearing as unique words.
+    :return: Absolute of relative frequency of words containing word_part.
+    """
+    extracted_words = extract_words_from_text(text, prevent_uppercase_duplicates)
+    if prevent_uppercase_duplicates:
+        word_part = word_part.lower()
+        text = text.lower()
+
+    if mode == "beginning":        # word begins with word_part
+        matches = pd.Series(re.findall(r"\b" + word_part, text))
+    elif mode == "ending":         # word ends with word_part
+        matches = pd.Series(re.findall(word_part + r"\b", text))
+    elif mode == "containing":     # word contains word_part somewhere
+        matches = pd.Series(re.findall(r"[\w]*" + word_part + r"[\w]*", text))
+    else:
+        raise AttributeError('no_word_parts() only supports "beginning", "ending" and "containing" '
+                             'as arguments for the parameter mode.')
+
+    if normalize:
+        return len(matches) / len(extracted_words)
+    else:
+        return len(matches)
