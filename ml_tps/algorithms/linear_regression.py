@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-from ml_tps.utils.dataframe_utils import add_bias_to_dataset
+from ml_tps.utils.data_processing import add_bias_to_dataset
 
 
 class LinearRegression:

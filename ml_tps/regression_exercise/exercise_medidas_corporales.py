@@ -1,7 +1,7 @@
 import pandas as pd
 import os
-from ml_tps.utils.dataframe_utils import get_test_train_X_y
-from ml_tps.utils.regression_utils.linear_regression import LinearRegression
+from ml_tps.utils.data_processing import get_test_train_X_y
+from ml_tps.algorithms.linear_regression import LinearRegression
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_FILEPATH = f"{dir_path}/../regression_exercise/data/"
