@@ -28,6 +28,7 @@ def get_closest_clusters(clusters: list, distance_method: str):
 
 
 def wrap_points_in_clusters(data: pd.DataFrame) -> list:
+    data.index = range(0, len(data))  # ensure that index increments from 0
     return [Cluster(index=idx, data=row) for idx, row in data.iterrows()]
 
 
@@ -37,18 +38,18 @@ class HierarchicalClustering:
         self.Z = None
         self.clusters = None
 
-    def fit(self, data: pd.DataFrame, distance_method: str, max_no_clusters: int) -> None:
-        data.index = range(0, len(data))  # ensure that index increments from 0
-
+    def fit(self, data: pd.DataFrame, distance_method: str, max_no_clusters: int, compute_full_tree: bool = True) -> None:
         clusters = wrap_points_in_clusters(data)
-        allow_clusters_setting = True
-        Z = list()
-        current_index = len(clusters)
 
+        allow_clusters_setting = True
+        Z = []
+        current_index = len(clusters)
         while len(clusters) > 1:
             if (len(clusters) <= max_no_clusters) and allow_clusters_setting:  # only set clusters once
                 self.clusters = clusters.copy()
                 allow_clusters_setting = False
+                if not compute_full_tree:   # performance benefits if dendrogram is not needed
+                    break
 
             min_cluster1, min_cluster2, min_distance = get_closest_clusters(clusters, distance_method)
             shared_no_of_originals = min_cluster1.no_originals + min_cluster2.no_originals
@@ -69,6 +70,9 @@ class HierarchicalClustering:
                                           "No. original data points in cluster"])
 
     def predict(self, data: pd.DataFrame, distance_method: str) -> pd.Series:
+        if self.clusters is None:
+            raise ValueError("Model has not been fitted yet.")
+
         predictions = []
         for idx, row in data.iterrows():
             example = Cluster(index=-1, data=row)
@@ -79,8 +83,11 @@ class HierarchicalClustering:
         return pd.Series(predictions)
 
     def plot_dendrogram(self) -> None:
-        if self.Z is None:
+        if (self.Z is None) and (self.clusters is None):
             raise ValueError("Model has not been fitted yet.")
+        if (self.Z is None) and (self.clusters is not None):
+            raise ValueError("Model has not been fully fitted. "
+                             "Re-fit the model with the parameter compute_full_tree set to True.")
 
         plt.figure()
         plt.xlabel("Data points")
@@ -90,7 +97,7 @@ class HierarchicalClustering:
         dn = dendrogram(self.Z)
         plt.show()
 
-    def plot_clustering(self, x_axis: str, y_axis: str, data: pd.DataFrame, distance_method: str) -> None:
+    def plot(self, x_axis: str, y_axis: str, data: pd.DataFrame, distance_method: str) -> None:
         predictions = self.predict(data=data, distance_method=distance_method)
         plt.scatter(data[x_axis], data[y_axis], c=predictions, s=50, cmap="Set3")
         plt.show()
@@ -164,6 +171,6 @@ method = "centroid"
 cls = HierarchicalClustering()
 cls.fit(data, distance_method=method, max_no_clusters=4)
 cls.plot_dendrogram()
-cls.plot_clustering(x_axis=0, y_axis=1, data=data, distance_method=method)
+cls.plot(x_axis=0, y_axis=1, data=data, distance_method=method)
 
 a = 1
