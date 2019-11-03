@@ -1,12 +1,11 @@
-import math
 import numpy as np
 import pandas as pd
 from typing import List, Callable
 from graphviz import Digraph
 
-from ml_tps.utils.probability_utils import relative_frequency
-from ml_tps.utils.data_processing import subdataframe, subdataframe_with_repeated
+from ml_tps.utils.data_processing import subdataframe
 from ml_tps.utils.random_utils import random_string
+from ml_tps.utils.formulas import shannon_entropy, gini_index
 
 
 # find leafs (= nodes that have no children) recursively
@@ -86,7 +85,7 @@ class DecisionTree:
     def __init__(self, dataset: pd.DataFrame, objective: str, gain_f: str = "shannon",
                  nodes: int = None, variables: int = None):
         if gain_f.lower() == "gini":
-            gain_function = gini
+            gain_function = gini_index
         else:
             gain_function = shannon_entropy
 
@@ -181,24 +180,8 @@ def generate_subtree(dataset: pd.DataFrame, objective: str,
     return node
 
 
-def shannon_entropy(dataset: pd.DataFrame, objective: str):
-    # H(S) = -p(+) * log2(p(+)) - p(-) * log2(p(-))
-    # if p+ = 0  then (-p(+) * log2(p(+))) is 0
-    ## General
-    # f(x = p(+)) = - x * log2(x) if x != 0 else 0
-    # H(S) = sum( f(x) for x in values)
-    f = lambda x: -x * math.log2(x) if x != 0 else 0
-    frs = relative_frequency(dataset[objective])
-    # As data set is an argument Sv is a subset of S
-    return sum([f(x) for x in frs.values()])
-
-
 def sv(dataset: pd.DataFrame, attribute: str, value) -> pd.DataFrame:
     return dataset[dataset[attribute] == value]
-
-
-def gini(dataset: pd.DataFrame, objective: str):
-    return 1 - sum(relative_frequency(dataset[objective]))
 
 
 def gain(dataset: pd.DataFrame, gain_f: Callable[[pd.DataFrame, str], float], attribute: str, objective: str):

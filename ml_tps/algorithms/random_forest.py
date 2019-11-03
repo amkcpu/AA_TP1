@@ -3,7 +3,9 @@ import numpy as np
 from graphviz import Digraph
 
 from ml_tps.utils.random_utils import random_string
-from ml_tps.algorithms.decision_tree import DecisionTree, subdataframe_with_repeated, gini, shannon_entropy
+from ml_tps.algorithms.decision_tree import DecisionTree
+from ml_tps.utils.data_processing import subdataframe_with_repeated
+from ml_tps.utils.formulas import gini_index, shannon_entropy
 
 
 class RandomForest:
@@ -22,7 +24,7 @@ class RandomForest:
 
     def gain_function(self, v):
         if self.gain_f.lower() == "gini" or (self.gain_f.lower() == "random" and np.random.random() < 0.5):
-            return gini
+            return gini_index
         else:
             return shannon_entropy
 

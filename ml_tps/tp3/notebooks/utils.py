@@ -1,7 +1,7 @@
 import numpy as np
 
 import matplotlib.pyplot as plt
-from ml_tps.tp3.space_generation import BooleanPlane, Point
+from ml_tps.utils.space_generation import BooleanPlane, Point
 
 
 def e1(epoch=5000, points_count=100, eta=0.05, min_error=0.0):

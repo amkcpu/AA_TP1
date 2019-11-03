@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-from ml_tps.utils.distance_utils import euclidean_distance
+from ml_tps.utils.formulas import euclidean_distance
 
 
 def initialize_centroids(X: pd.DataFrame, k: int,

@@ -1,7 +1,7 @@
 import pandas as pd
 from scipy.cluster.hierarchy import dendrogram
 import matplotlib.pyplot as plt
-from ml_tps.utils.distance_utils import euclidean_distance
+from ml_tps.utils.formulas import euclidean_distance
 
 
 def get_closest_clusters(clusters: list, distance_method: str):

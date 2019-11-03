@@ -1,6 +1,6 @@
 import pandas as pd
-from ml_tps.utils.distance_utils import manhattan_distance
-from ml_tps.utils.k_means import initialize_centroids, KMeans
+from ml_tps.utils.formulas import manhattan_distance
+from ml_tps.algorithms.k_means import initialize_centroids, KMeans
 
 
 def assign_centroids(X: pd.DataFrame, centroids: pd.DataFrame) -> pd.DataFrame:

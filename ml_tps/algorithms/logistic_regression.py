@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from ml_tps.utils.formula_utils import sigmoid, l1_regularization, l2_regularization
+from ml_tps.utils.formulas import sigmoid, l1_regularization, l2_regularization
 from ml_tps.utils.dataframe_utils import add_bias_to_dataset
 
 

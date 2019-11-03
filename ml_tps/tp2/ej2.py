@@ -1,10 +1,10 @@
-# Trabajo practico 2 - Ejercicio 2
-from ml_tps.utils.data_processing import divide_in_training_test_datasets
-from ml_tps.algorithms.decision_tree import DecisionTree, RandomForest
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
+from ml_tps.utils.data_processing import divide_in_training_test_datasets
+from ml_tps.algorithms.decision_tree import DecisionTree
+from ml_tps.algorithms.random_forest import RandomForest
 from ml_tps.utils.evaluation import getConfusionMatrix, computeAccuracy
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
