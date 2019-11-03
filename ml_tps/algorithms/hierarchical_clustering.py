@@ -5,6 +5,12 @@ from ml_tps.utils.distance_utils import euclidean_distance
 
 
 def get_closest_clusters(clusters: list, distance_method: str):
+    """Searches for the two closest clusters in a list of clusters.
+
+    :param clusters: Clusters to be searched in.
+    :param distance_method: The distance metric to be used for the distance computation.
+    :return: Returns the two closest clusters as objects and the calculated distance between them.
+    """
     total_distances = []
     for cluster in clusters:
         distances_per_cluster = {}
@@ -35,10 +41,26 @@ def wrap_points_in_clusters(data: pd.DataFrame) -> list:
 class HierarchicalClustering:
 
     def __init__(self):
+        """Finds specified number of clusters in the passed data set using bottom-up hierarchical clustering.
+
+        Uses two class variables:
+            self.Z is oriented to the specification needed by SciPy's dendrogram method and is used precisely for plotting the dendrogram.
+
+            self.clusters is a list containing the clusters as found by the model.
+        """
         self.Z = None
         self.clusters = None
 
     def fit(self, data: pd.DataFrame, distance_method: str, max_no_clusters: int, compute_full_tree: bool = True) -> None:
+        """Fits the bottom-up hierarchical clustering model and sets the class variables self.Z and self.clusters.
+
+        :param data: Data set to be clustered.
+        :param distance_method: Determines the method to be used for calculating the distance of the data points.
+        :param max_no_clusters: Specifies the maximum number of clusters to be searched for by the algorithm.
+        :param compute_full_tree: If set to False, the bottom-up clustering algorithm is interrupted as soon as
+                                the specified number of clusters has been reached.
+                                This may provide performance benefits if a dendrogram is not needed.
+        """
         clusters = wrap_points_in_clusters(data)
 
         allow_clusters_setting = True
@@ -48,7 +70,7 @@ class HierarchicalClustering:
             if (len(clusters) <= max_no_clusters) and allow_clusters_setting:  # only set clusters once
                 self.clusters = clusters.copy()
                 allow_clusters_setting = False
-                if not compute_full_tree:   # performance benefits if dendrogram is not needed
+                if not compute_full_tree:
                     break
 
             min_cluster1, min_cluster2, min_distance = get_closest_clusters(clusters, distance_method)
@@ -70,6 +92,12 @@ class HierarchicalClustering:
                                           "No. original data points in cluster"])
 
     def predict(self, data: pd.DataFrame, distance_method: str) -> pd.Series:
+        """Assigns each given example to the nearest cluster in the previously fitted model.
+
+        :param data: Data to be assigned using the previously fitted clustering model.
+        :param distance_method: Determines the method to be used for calculating the distance of the examples to the model's clusters.
+        :return: Series containing the index number of each example's nearest cluster.
+        """
         if self.clusters is None:
             raise ValueError("Model has not been fitted yet.")
 
@@ -83,6 +111,7 @@ class HierarchicalClustering:
         return pd.Series(predictions)
 
     def plot_dendrogram(self) -> None:
+        """Plot clustering's dendrogram using SciPy's dendrogram() method."""
         if (self.Z is None) and (self.clusters is None):
             raise ValueError("Model has not been fitted yet.")
         if (self.Z is None) and (self.clusters is not None):
@@ -98,6 +127,13 @@ class HierarchicalClustering:
         plt.show()
 
     def plot(self, x_axis: str, y_axis: str, data: pd.DataFrame, distance_method: str) -> None:
+        """Plots passed on data along two specified axes, colored by its corresponding cluster.
+
+        :param x_axis: Name of the DataFrame's column to be used as x-axis.
+        :param y_axis: Name of the DataFrame's column to be used as y-axis.
+        :param data: Data to be assigned using the previously fitted clustering model.
+        :param distance_method: Determines the method to be used for calculating the distance of the examples to the model's clusters.
+        """
         predictions = self.predict(data=data, distance_method=distance_method)
         plt.scatter(data[x_axis], data[y_axis], c=predictions, s=50, cmap="Set3")
         plt.show()
@@ -128,6 +164,14 @@ class Cluster:
         self.no_originals = cluster1.no_originals + cluster2.no_originals
 
     def cluster_distance(self, other_cluster, distance_method: str) -> float:
+        """Calculates distance of self with the passed on cluster.
+
+        :param other_cluster: Cluster to be compared to self.
+        :param distance_method: Distance metric to be used in comparison. Supports Centroid ("centroid"),
+                                Maximum ("max"), Minimum ("min") and Average ("avg") with multiple keywords
+                                to provide compatibility with the implementation of SciPy's linkage() method.
+        :return: Distance between the two clusters as float.
+        """
         methods = {"Centroid": ["cent", "centroid"],
                    "Max": ["max", "complete"],
                    "Min": ["min", "single"],
