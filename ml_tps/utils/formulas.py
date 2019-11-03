@@ -7,6 +7,7 @@ from ml_tps.utils.probability_utils import relative_frequency
 
 
 def euclidean_distance(x1: pd.Series, x2: pd.Series):
+    """Metric based on squared distances. Also known as l2 or 2-Norm."""
     if not (is_numeric_dtype(x1) and is_numeric_dtype(x2)):
         raise ValueError("Euclidean Distance: Passed vectors not of numeric data type.")
     if len(x1) != len(x2):
@@ -15,22 +16,14 @@ def euclidean_distance(x1: pd.Series, x2: pd.Series):
     return np.sqrt(sum(np.square(x1 - x2)))
 
 
-def l2_distance(x1: pd.Series, x2: pd.Series):
-    return euclidean_distance(x1, x2)
-
-
 def manhattan_distance(x1: pd.Series, x2: pd.Series):
-    """Metric that sums the absolute distances. Also known as taxicab geometry metric or 1-Norm."""
+    """Metric that sums the absolute distances. Also known as taxicab geometry metric, l1 or 1-Norm."""
     if not (is_numeric_dtype(x1) and is_numeric_dtype(x2)):
         raise ValueError("Manhattan Distance: Passed vectors not of numeric data type.")
     if len(x1) != len(x2):
         raise ArithmeticError("Manhattan Distance: Vectors must have same length.")
 
     return sum(np.abs(x1 - x2))
-
-
-def l1_distance(x1: pd.Series, x2: pd.Series):
-    return manhattan_distance(x1, x2)
 
 
 def sigmoid(x):

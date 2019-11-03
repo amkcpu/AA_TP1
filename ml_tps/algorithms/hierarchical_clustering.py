@@ -1,21 +1,22 @@
 import pandas as pd
 from scipy.cluster.hierarchy import dendrogram
 import matplotlib.pyplot as plt
-from ml_tps.utils.formulas import euclidean_distance
+from ml_tps.utils.formulas import euclidean_distance, manhattan_distance
 
 
-def get_closest_clusters(clusters: list, distance_method: str):
+def get_closest_clusters(clusters: list, distance_method: str, distance_metric: str):
     """Searches for the two closest clusters in a list of clusters.
 
     :param clusters: Clusters to be searched in.
     :param distance_method: The distance method to be used for the distance computation.
+    :param distance_metric: Distance metric to be used. Supports Euclidean ("euclidean", "l2") and Manhattan ("manhattan", "l1).
     :return: Returns the two closest clusters as objects and the calculated distance between them.
     """
     total_distances = []
     for cluster in clusters:
         distances_per_cluster = {}
         for cl in clusters:
-            distance = cluster.cluster_distance(other_cluster=cl, distance_method=distance_method)
+            distance = cluster.cluster_distance(other_cluster=cl, distance_method=distance_method, distance_metric=distance_metric)
             distances_per_cluster[cl] = distance
 
         distances_per_cluster.pop(cluster)  # don't consider distance to itself
@@ -51,11 +52,13 @@ class HierarchicalClustering:
         self.Z = None
         self.clusters = None
 
-    def fit(self, data: pd.DataFrame, distance_method: str, max_no_clusters: int, compute_full_tree: bool = True) -> None:
+    def fit(self, data: pd.DataFrame, distance_method: str, distance_metric: str,
+            max_no_clusters: int, compute_full_tree: bool = True) -> None:
         """Fits the bottom-up hierarchical clustering model and sets the class variables self.Z and self.clusters.
 
         :param data: Data set to be clustered.
         :param distance_method: Determines the method to be used for calculating the distance of the data points.
+        :param distance_metric: Distance metric to be used. Supports Euclidean ("euclidean", "l2") and Manhattan ("manhattan", "l1).
         :param max_no_clusters: Specifies the maximum number of clusters to be searched for by the algorithm.
         :param compute_full_tree: If set to False, the bottom-up clustering algorithm is interrupted as soon as
                                 the specified number of clusters has been reached.
@@ -73,7 +76,7 @@ class HierarchicalClustering:
                 if not compute_full_tree:
                     break
 
-            min_cluster1, min_cluster2, min_distance = get_closest_clusters(clusters, distance_method)
+            min_cluster1, min_cluster2, min_distance = get_closest_clusters(clusters, distance_method, distance_metric)
             shared_no_of_originals = min_cluster1.no_originals + min_cluster2.no_originals
 
             Z.append([min_cluster1.index, min_cluster2.index, min_distance, shared_no_of_originals])
@@ -91,11 +94,12 @@ class HierarchicalClustering:
         self.Z = pd.DataFrame(Z, columns=["Prev_Cluster 1", "Prev_Cluster 2", "Cluster Distance",
                                           "No. original data points in cluster"])
 
-    def predict(self, data: pd.DataFrame, distance_method: str) -> pd.Series:
+    def predict(self, data: pd.DataFrame, distance_method: str, distance_metric: str) -> pd.Series:
         """Assigns each given example to the nearest cluster in the previously fitted model.
 
         :param data: Data to be assigned using the previously fitted clustering model.
         :param distance_method: Determines the method to be used for calculating the distance of the examples to the model's clusters.
+        :param distance_metric: Distance metric to be used. Supports Euclidean ("euclidean", "l2") and Manhattan ("manhattan", "l1).
         :return: Series containing the index number of each example's nearest cluster.
         """
         if self.clusters is None:
@@ -104,7 +108,8 @@ class HierarchicalClustering:
         predictions = []
         for idx, row in data.iterrows():
             example = Cluster(index=-1, data=row)
-            distances = {cluster.index: example.cluster_distance(cluster, distance_method) for cluster in self.clusters}
+            distances = {cluster.index: example.cluster_distance(cluster, distance_method, distance_metric)
+                         for cluster in self.clusters}
             prediction = min(distances, key=distances.get)
             predictions.append(prediction)
 
@@ -126,15 +131,16 @@ class HierarchicalClustering:
         dn = dendrogram(self.Z)
         plt.show()
 
-    def plot(self, x_axis: str, y_axis: str, data: pd.DataFrame, distance_method: str) -> None:
+    def plot(self, x_axis: str, y_axis: str, data: pd.DataFrame, distance_method: str, distance_metric: str) -> None:
         """Plots passed on data along two specified axes, colored by its corresponding cluster.
 
         :param x_axis: Name of the DataFrame's column to be used as x-axis.
         :param y_axis: Name of the DataFrame's column to be used as y-axis.
         :param data: Data to be assigned using the previously fitted clustering model.
         :param distance_method: Determines the method to be used for calculating the distance of the examples to the model's clusters.
+        :param distance_metric: Distance metric to be used. Supports Euclidean ("euclidean", "l2") and Manhattan ("manhattan", "l1).
         """
-        predictions = self.predict(data=data, distance_method=distance_method)
+        predictions = self.predict(data=data, distance_method=distance_method, distance_metric=distance_metric)
         plt.scatter(data[x_axis], data[y_axis], c=predictions, s=50, cmap="Set3")
         plt.show()
 
@@ -163,7 +169,7 @@ class Cluster:
         self.centroid = self.members.mean(axis=0)
         self.no_originals = cluster1.no_originals + cluster2.no_originals
 
-    def cluster_distance(self, other_cluster, distance_method: str) -> float:
+    def cluster_distance(self, other_cluster, distance_method: str, distance_metric: str) -> float:
         """Calculates distance of self with the passed on cluster.
 
         :param other_cluster: Cluster to be compared to self.
@@ -174,36 +180,50 @@ class Cluster:
                                 and average distance between all points in both clusters ("avg").
                                 Multiple keywords per method are supported in order to provide compatibility
                                 with SciPy's linkage() method.
+        :param distance_metric: Distance metric to be used. Supports Euclidean ("euclidean", "l2") and Manhattan ("manhattan", "l1).
         :return: Distance between the two clusters as float.
         """
         methods = {"Centroid": ["cent", "centroid"],
                    "Max": ["max", "complete"],
                    "Min": ["min", "single"],
                    "Average": ["avg", "average"]}   # alternative names for consistency with SciPy implementation
+        metrics = {"Euclidean": ["euclidean", "l2"],
+                   "Manhattan": ["manhattan", "l1"]}
 
+        # Select distance metric
+        if distance_metric in metrics["Euclidean"]:
+            metric = euclidean_distance
+        elif distance_metric in metrics["Manhattan"]:
+            metric = manhattan_distance
+        else:
+            raise AttributeError('"{0}" is not a supported metric for calculating cluster distances. '
+                                 'The following dictionary lists the supported metrics as keys, '
+                                 'and the corresponding keywords as values: {1}.'.format(distance_metric, metrics))
+
+        # Select distance method
         if distance_method in methods["Centroid"]:
-            return euclidean_distance(self.centroid, other_cluster.centroid)
+            return metric(self.centroid, other_cluster.centroid)
         elif distance_method in methods["Max"]:
             distances = []
             for idx, row in self.members.iterrows():
-                distance_per_cluster = [euclidean_distance(row, r) for i, r in other_cluster.members.iterrows()]
+                distance_per_cluster = [metric(row, r) for i, r in other_cluster.members.iterrows()]
                 max_distance = max(distance_per_cluster)
                 distances.append(max_distance)
             return max(distances)
         elif distance_method in methods["Min"]:
             distances = []
             for idx, row in self.members.iterrows():
-                distance_per_cluster = [euclidean_distance(row, r) for i, r in other_cluster.members.iterrows()]
+                distance_per_cluster = [metric(row, r) for i, r in other_cluster.members.iterrows()]
                 min_distance = min(distance_per_cluster)
                 distances.append(min_distance)
             return min(distances)
         elif distance_method in methods["Average"]:
             distances = []
             for idx, row in self.members.iterrows():
-                distance_per_cluster = [euclidean_distance(row, r) for i, r in other_cluster.members.iterrows()]
+                distance_per_cluster = [metric(row, r) for i, r in other_cluster.members.iterrows()]
                 distances.extend(distance_per_cluster)
             return sum(distances) / len(distances)
         else:
-            raise AttributeError('"{0}" is not a supported method for calculating cluster distance. '
+            raise AttributeError('"{0}" is not a supported method for calculating cluster distances. '
                                  'The following dictionary lists the supported methods as keys, '
                                  'and the corresponding keywords as values: {1}.'.format(distance_method, methods))
