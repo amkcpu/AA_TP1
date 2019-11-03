@@ -1,9 +1,5 @@
-# Trabajo practico 2 - Ejercicio 1
-# a) Implement decision tree with Shannon entropy
-# b) Add additional training example and reconstruct decision tree
-
-from ml_tps.algorithms.decision_tree import DecisionTree
 import pandas as pd
+from ml_tps.algorithms.decision_tree import DecisionTree
 
 DEFAULT_FILEPATH = "data/deporte.csv"
 DEFAULT_OBJECTIVE = "Disfruta?"
@@ -24,11 +20,11 @@ def main():
     if drop_extra_indexing_column:
         del dataset[extra_index_column_title]   # Drop extra indexing column because of lacking value to classification
 
-    # =========== EJ1 a) Create and generate Decision Tree ==========
+    # =========== EJ1 a) Create and generate Decision Tree with Shannon entropy ==========
     decision_tree = DecisionTree(dataset[:4], objective, "shannon")    # exclude example (5th example)
     decision_tree.plot(name_prefix="Shannon")
 
-    # =========== EJ1 b) Add example ==========
+    # =========== EJ1 b) Add additional training example and reconstruct decision tree ==========
     decision_tree_example_added = DecisionTree(dataset, objective, "shannon")
     decision_tree_example_added.plot(name_prefix="Shannon_Example_Added")
 

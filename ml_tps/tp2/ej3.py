@@ -1,10 +1,10 @@
-# Trabajo practico 2 - Ejercicio 3
+import datetime
 
 from ml_tps.algorithms.k_nearest_neighbors import knn
-from ml_tps.utils.evaluation import *
+from ml_tps.utils.evaluation import getConfusionMatrix, computeAccuracy, computePrecision, computeRecall, \
+    computeTruePositiveRate, f1_score
 from ml_tps.utils.data_processing import divide_in_training_test_datasets, \
     rewrite_positives_negatives, delete_non_numeric_columns, separate_dataset_objective_data
-import datetime
 
 DEFAULT_FILEPATH = "data/reviews_sentiment.csv"
 DEFAULT_K = 5

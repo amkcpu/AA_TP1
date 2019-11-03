@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from ml_tps.utils.data_processing import separate_dataset_objective_data
-from ml_tps.utils.distance_utils import euclidean_distance
+from ml_tps.utils.formulas import euclidean_distance
 
 
 def knn(example: pd.Series, training_set: pd.DataFrame, objective: str, k: int, weighted: bool):

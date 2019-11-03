@@ -1,29 +1,6 @@
 import pandas as pd
-import numpy as np
-from matplotlib import pyplot as plt
-from ml_tps.utils.formulas import euclidean_distance
-
-
-def initialize_centroids(X: pd.DataFrame, k: int,
-                         initial_centroids: pd.DataFrame = None,
-                         current_centroids: pd.DataFrame = None) -> pd.DataFrame:
-    """Randomly picks k examples from data set as centroids."""
-    if initial_centroids is not None:
-        if not len(initial_centroids.columns) == len(X.columns):
-            raise ValueError("The centroids that were passed (initial_centroids) have a different dimension ({0}) "
-                             "than the data set ({1}).".format(len(initial_centroids.columns), len(X.columns)))
-        centroids = initial_centroids   # current centroids are overridden
-    elif current_centroids is not None:
-        if not len(current_centroids.columns) == len(X.columns):
-            raise ValueError("Already assigned centroids have a different dimension ({0}) than the data set "
-                             "that was passed ({1}).".format(len(current_centroids.columns), len(X.columns)))
-    else:
-        indexes = np.arange(len(X))
-        np.random.shuffle(indexes)
-        indexes = list(indexes)
-        centroids = pd.DataFrame([X.iloc[i] for i in indexes[:k]], index=range(1, k+1))
-
-    return centroids
+from ml_tps.utils.formulas import manhattan_distance
+from ml_tps.algorithms.k_means import initialize_centroids, KMeans
 
 
 def assign_centroids(X: pd.DataFrame, centroids: pd.DataFrame) -> pd.DataFrame:
@@ -31,7 +8,7 @@ def assign_centroids(X: pd.DataFrame, centroids: pd.DataFrame) -> pd.DataFrame:
     X_assigned = X.copy()
 
     for idx, row in X.iterrows():
-        distances = {i: euclidean_distance(row, r) for i, r in centroids.iterrows()}    # calc distance to each centroid
+        distances = {i: manhattan_distance(row, r) for i, r in centroids.iterrows()}    # calc distance to each centroid
         closest_centroid = min(distances, key=distances.get)    # assign training example to closest centroid
         X_assigned.at[idx, "Centroid"] = closest_centroid
 
@@ -39,22 +16,22 @@ def assign_centroids(X: pd.DataFrame, centroids: pd.DataFrame) -> pd.DataFrame:
 
 
 def move_centroids(X_assigned: pd.DataFrame, centroids: pd.DataFrame) -> pd.DataFrame:
-    """Moves the centroids to the mean of their corresponding examples."""
+    """Moves the centroids to the median of their corresponding examples."""
     for idx, row in centroids.iterrows():
         assigned_rows = X_assigned[X_assigned["Centroid"] == idx]
-        centroids.at[idx, :] = assigned_rows.drop("Centroid", axis=1).mean(axis=0)
+        centroids.at[idx, :] = assigned_rows.drop("Centroid", axis=1).median(axis=0)
 
     return centroids
 
 
-class KMeans:
+class KMedians:
 
     def __init__(self, initial_centroids: pd.DataFrame = None):
         self.centroids = initial_centroids
 
     def fit(self, X: pd.DataFrame, k: int, iters: int = 300, tol: float = 0.0001,
             initial_centroids: pd.DataFrame = None, plot_x_axis: str = None, plot_y_axis: str = None) -> None:
-        """Clusters a given data set into k clusters using the K-Means algorithm.
+        """Clusters a given data set into k clusters using the K-Medians algorithm.
 
         :param X: Data set on which to perform clustering.
         :param k: Number of clusters to be found.
@@ -79,7 +56,7 @@ class KMeans:
 
             error = self.cost(X_assigned)
             if self.centroids.equals(centroids_prev):    # break if centroids are stable
-                print("Centroids stable. K-Means finished.")
+                print("Centroids stable. K-Medians finished.")
                 break
             it += 1
 
@@ -92,14 +69,10 @@ class KMeans:
         :param X: DataFrame containing examples to be predicted.
         :return: Series containing the closest centroid for each example, identified by an int number.
         """
-        if self.centroids is None:
-            raise ValueError("Model has not been fitted yet (centroids = None).")
-
-        X_assigned = assign_centroids(X, self.centroids)
-        return X_assigned["Centroid"]
+        return KMeans.predict(self=self, X=X)
 
     def cost(self, X_assigned: pd.DataFrame, costs_per_class: bool = False):
-        """K-Means cost function based on distances between data points and their assigned centroids.
+        """K-Medians cost function based on distances between data points and their assigned centroids.
 
         :param X_assigned: DataFrame containing examples in rows as well as the column "Centroid"
                             containing their assigned centroid.
@@ -107,18 +80,7 @@ class KMeans:
         :return: Sum of distances of each data point to their assigned centroids
                 or dict containing cost for each centroid separately.
         """
-        if self.centroids is None:
-            raise ValueError("Model has not been fitted yet (centroids = None).")
-
-        costs = dict()
-        for idx, row in self.centroids.iterrows():
-            assigned_rows = X_assigned[X_assigned["Centroid"] == idx].drop("Centroid", axis=1)
-            costs[idx] = sum([euclidean_distance(row, r) for i, r in assigned_rows.iterrows()]) / len(assigned_rows)
-
-        if costs_per_class:
-            return costs
-        else:
-            return sum(costs.values())
+        return KMeans.cost(self=self, X_assigned=X_assigned, costs_per_class=costs_per_class)
 
     def plot(self, x_axis: str, y_axis: str, dataset: pd.DataFrame, plot_centroids: bool = True) -> None:
         '''Plots given data set along two specified dimensions, clustered around previously fit centroids (indicated by their color).
@@ -128,13 +90,4 @@ class KMeans:
         :param dataset: Data set to be clustered and plotted.
         :param plot_centroids: Boolean specifying whether the previously fit centroids are to be plotted as well.
         '''
-        if self.centroids is None:
-            raise ValueError("Model has not been fitted yet (centroids = None).")
-
-        X_assigned = assign_centroids(X=dataset, centroids=self.centroids)
-        plt.scatter(X_assigned[x_axis], X_assigned[y_axis], c=X_assigned["Centroid"], s=50, cmap="Set3")
-
-        if plot_centroids:
-            plt.scatter(self.centroids[x_axis], self.centroids[y_axis], c="black", marker="x", s=50)
-
-        plt.show()
+        KMeans.plot(self=self, x_axis=x_axis, y_axis=y_axis, dataset=dataset, plot_centroids=plot_centroids)
