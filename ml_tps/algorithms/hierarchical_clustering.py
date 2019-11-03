@@ -8,7 +8,7 @@ def get_closest_clusters(clusters: list, distance_method: str):
     """Searches for the two closest clusters in a list of clusters.
 
     :param clusters: Clusters to be searched in.
-    :param distance_method: The distance metric to be used for the distance computation.
+    :param distance_method: The distance method to be used for the distance computation.
     :return: Returns the two closest clusters as objects and the calculated distance between them.
     """
     total_distances = []
@@ -167,9 +167,13 @@ class Cluster:
         """Calculates distance of self with the passed on cluster.
 
         :param other_cluster: Cluster to be compared to self.
-        :param distance_method: Distance metric to be used in comparison. Supports Centroid ("centroid"),
-                                Maximum ("max"), Minimum ("min") and Average ("avg") with multiple keywords
-                                to provide compatibility with the implementation of SciPy's linkage() method.
+        :param distance_method: Distance method to be used in comparison. Supports:
+                                Distance between the cluster centroids/means ("centroid"),
+                                maximum distance between all points in both clusters ("max"),
+                                minimum distance between all points in both clusters ("min")
+                                and average distance between all points in both clusters ("avg").
+                                Multiple keywords per method are supported in order to provide compatibility
+                                with SciPy's linkage() method.
         :return: Distance between the two clusters as float.
         """
         methods = {"Centroid": ["cent", "centroid"],
@@ -203,18 +207,3 @@ class Cluster:
             raise AttributeError('"{0}" is not a supported method for calculating cluster distance. '
                                  'The following dictionary lists the supported methods as keys, '
                                  'and the corresponding keywords as values: {1}.'.format(distance_method, methods))
-
-
-data = pd.DataFrame([[1, 2], [1, 1], [5, 2], [3, 2], [1, 7], [2, 7], [2, 8], [5, 8], [4, 4], [4, 2]])
-data2 = pd.DataFrame([[1, 1], [1, 2], [8, 8], [8, 9]])
-plt.scatter(data[0], data[1])
-plt.show()
-
-method = "centroid"
-
-cls = HierarchicalClustering()
-cls.fit(data, distance_method=method, max_no_clusters=4)
-cls.plot_dendrogram()
-cls.plot(x_axis=0, y_axis=1, data=data, distance_method=method)
-
-a = 1
