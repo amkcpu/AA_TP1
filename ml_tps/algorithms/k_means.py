@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-from ml_tps.utils.formulas import euclidean_distance
+from ml_tps.utils.distance_metric_utils import DistanceMetric
 
 
 def initialize_centroids(X: pd.DataFrame, k: int,
@@ -27,12 +27,13 @@ def initialize_centroids(X: pd.DataFrame, k: int,
     return centroids
 
 
-def assign_centroids(X: pd.DataFrame, centroids: pd.DataFrame) -> pd.DataFrame:
+def assign_centroids(X: pd.DataFrame, centroids: pd.DataFrame, metric: str = "euclidean") -> pd.DataFrame:
     """Assigns the nearest centroid to each training example."""
     X_assigned = X.copy()
 
+    distance = DistanceMetric(metric)
     for idx, row in X.iterrows():
-        distances = {i: euclidean_distance(row, r) for i, r in centroids.iterrows()}    # calc distance to each centroid
+        distances = {i: distance.calculate(row, r) for i, r in centroids.iterrows()}    # calc distance to each centroid
         closest_centroid = min(distances, key=distances.get)    # assign training example to closest centroid
         X_assigned.at[idx, "Centroid"] = closest_centroid
 
@@ -58,6 +59,7 @@ class KMeans:
     def __init__(self, initial_centroids: pd.DataFrame = None):
         self.centroids = initial_centroids
         self.move_f = "mean"
+        self.metric = "euclidean"
 
     def fit(self, X: pd.DataFrame, k: int, iters: int = 300, tol: float = 0.0001,
             initial_centroids: pd.DataFrame = None, plot_x_axis: str = None, plot_y_axis: str = None) -> None:
@@ -73,7 +75,7 @@ class KMeans:
         """
         self.centroids = initialize_centroids(X, k, initial_centroids=initial_centroids, current_centroids=self.centroids)
 
-        X_assigned = assign_centroids(X, self.centroids)
+        X_assigned = assign_centroids(X, self.centroids, self.metric)
         error = self.cost(X_assigned)
         it = 0
         while it < iters and error > tol:
@@ -82,7 +84,7 @@ class KMeans:
 
             centroids_prev = self.centroids.copy()
             self.centroids = move_centroids(X_assigned, self.centroids, self.move_f)
-            X_assigned = assign_centroids(X, self.centroids)
+            X_assigned = assign_centroids(X, self.centroids, self.metric)
 
             error = self.cost(X_assigned)
             if self.centroids.equals(centroids_prev):    # break if centroids are stable
@@ -102,25 +104,27 @@ class KMeans:
         if self.centroids is None:
             raise ValueError("Model has not been fitted yet (centroids = None).")
 
-        X_assigned = assign_centroids(X, self.centroids)
+        X_assigned = assign_centroids(X, self.centroids, self.metric)
         return X_assigned["Centroid"]
 
-    def cost(self, X_assigned: pd.DataFrame, costs_per_class: bool = False):
+    def cost(self, X_assigned: pd.DataFrame, costs_per_class: bool = False, metric: str = "euclidean"):
         """K-Means cost function based on distances between data points and their assigned centroids.
 
         :param X_assigned: DataFrame containing examples in rows as well as the column "Centroid"
                             containing their assigned centroid.
         :param costs_per_class: If true, costs are returned as dict containing cost for each centroid.
+        :param metric: Distance metric to be used for calculating the cost.
         :return: Sum of distances of each data point to their assigned centroids
                 or dict containing cost for each centroid separately.
         """
         if self.centroids is None:
             raise ValueError("Model has not been fitted yet (centroids = None).")
 
+        distance = DistanceMetric(metric)
         costs = dict()
         for idx, row in self.centroids.iterrows():
             assigned_rows = X_assigned[X_assigned["Centroid"] == idx].drop("Centroid", axis=1)
-            costs[idx] = sum([euclidean_distance(row, r) for i, r in assigned_rows.iterrows()]) / len(assigned_rows)
+            costs[idx] = sum([distance.calculate(row, r) for i, r in assigned_rows.iterrows()]) / len(assigned_rows)
 
         if costs_per_class:
             return costs
@@ -138,7 +142,7 @@ class KMeans:
         if self.centroids is None:
             raise ValueError("Model has not been fitted yet (centroids = None).")
 
-        X_assigned = assign_centroids(X=dataset, centroids=self.centroids)
+        X_assigned = assign_centroids(X=dataset, centroids=self.centroids, metric=self.metric)
         plt.scatter(X_assigned[x_axis], X_assigned[y_axis], c=X_assigned["Centroid"], s=50, cmap="Set3")
 
         if plot_centroids:
@@ -152,3 +156,4 @@ class KMedians(KMeans):
     def __init__(self, initial_centroids: pd.DataFrame = None):
         super().__init__(initial_centroids)
         self.move_f = "median"
+        self.metric = "manhattan"

@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import
 from ml_tps.utils.data_processing import add_bias_to_dataset
-from ml_tps.utils.formulas import l1_regularization, l2_regularization
+from ml_tps.utils.regularization_utils import Regularization
 
 
 def gradient_descent(X: pd.DataFrame, y: pd.Series, theta: pd.Series = None, alpha: float = 0.01, max_iter: int = 300,
@@ -15,20 +15,7 @@ def gradient_descent(X: pd.DataFrame, y: pd.Series, theta: pd.Series = None, alp
     LinearRegression.fit() method.
 
     :returns: Calculated theta as Series."""
-    reg_types = {"Lasso": ["lasso", "l1", "absolute"], "Ridge": ["ridge", "l2", "squared"]}
-    if reg_type in reg_types["Lasso"]:
-        reg_method = l1_regularization
-    elif reg_type in reg_types["Ridge"]:
-        reg_method = l2_regularization
-    elif reg_type is None:
-        reg_method = lambda theta, lam: 0  # always map to 0
-    else:
-        raise ValueError('"{0}" is not a supported regularization method. The following dictionary lists the supported '
-                         'methods as keys, and the corresponding keywords as values: {1}.'.format(reg_type, reg_types))
-
-    if (theta is None) or ((len(theta) - 1) != len(X.columns)):
-        theta = pd.Series(np.zeros(len(X.columns) + 1))
-
+    reg = Regularization(reg_type, lam)
     X_biased = add_bias_to_dataset(X, reset_columns=True)
     n = len(X)
     it = 0
@@ -36,7 +23,7 @@ def gradient_descent(X: pd.DataFrame, y: pd.Series, theta: pd.Series = None, alp
     error = cost(theta, X, y)
     while it < max_iter and error > tol:
         errors.append(error)
-        reg_term = reg_method(theta, lam)
+        reg_term = reg.calculate(theta)
 
         theta_update = (alpha / n) * (X_biased.T @ ((X_biased @ theta) - y)) + reg_term
         bias_update = (alpha / n) * sum(X_biased @ theta - y)

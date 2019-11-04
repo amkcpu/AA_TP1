@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from ml_tps.utils.data_processing import separate_dataset_objective_data
-from ml_tps.utils.formulas import euclidean_distance
+from ml_tps.utils.distance_metric_utils import DistanceMetric
 
 
 def knn(example: pd.Series, training_set: pd.DataFrame, objective: str, k: int, weighted: bool):
@@ -31,7 +31,8 @@ def get_nearest_neighbors(example: pd.Series, training_set: pd.DataFrame, object
     training_set_values, obj_values = separate_dataset_objective_data(dataset=training_set, objective=objective)
     example.index = training_set_values.columns
 
-    neighbors = pd.Series([euclidean_distance(row, example) for idx, row in training_set_values.iterrows()],
+    distance = DistanceMetric("euclidean")
+    neighbors = pd.Series([distance.calculate(row, example) for idx, row in training_set_values.iterrows()],
                           index=training_set_values.index)
     neighbors = pd.concat([neighbors, obj_values], axis=1)
     neighbors.columns = ["Distance", "Class"]

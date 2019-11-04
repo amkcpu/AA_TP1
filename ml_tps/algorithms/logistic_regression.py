@@ -1,14 +1,16 @@
 import pandas as pd
 import numpy as np
-from ml_tps.utils.formulas import sigmoid, l1_regularization, l2_regularization
+from ml_tps.utils.formulas import sigmoid
 from ml_tps.utils.data_processing import add_bias_to_dataset
+from ml_tps.utils.regularization_utils import Regularization
 
 
 class LogisticRegression:
-    """Implements Logistic Regression assuming two prediction classes, 0 and 1."""
 
     def __init__(self, initial_theta: pd.Series = None):
-        """:param initial_theta: Initial values for theta. Has to include bias term."""
+        """Implements Logistic Regression assuming two prediction classes, 0 and 1.
+
+        :param initial_theta: Initial values for theta. Has to include bias term."""
         self.theta = initial_theta
         if initial_theta is not None:
             self.theta.index = range(0, len(initial_theta))
@@ -29,18 +31,12 @@ class LogisticRegression:
         if self.theta is None:
             self.theta = pd.Series(np.zeros(len(X.columns) + 1))
 
-        if reg_type == "l1":
-            reg_method = l1_regularization
-        elif reg_type == "l2":
-            reg_method = l2_regularization
-        elif reg_type is None:
-            reg_method = lambda theta, lam: 0  # always map to 0
-
+        reg = Regularization(reg_type, lam)
         X_biased = add_bias_to_dataset(X, reset_columns=True)
         it = 0
         error = self.cost(X, y)
         while it < max_iter and error > tol:
-            reg_term = reg_method(self.theta, lam)
+            reg_term = reg.calculate(self.theta)
 
             theta_update = alpha * (X_biased.T @ (sigmoid(X_biased @ self.theta) - y)) + reg_term
             bias_update = alpha * sum(sigmoid(X_biased @ self.theta) - y)

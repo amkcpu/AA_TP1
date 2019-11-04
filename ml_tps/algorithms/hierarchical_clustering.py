@@ -1,7 +1,7 @@
 import pandas as pd
 from scipy.cluster.hierarchy import dendrogram
 import matplotlib.pyplot as plt
-from ml_tps.utils.formulas import euclidean_distance, manhattan_distance
+from ml_tps.utils.distance_metric_utils import DistanceMetric
 
 
 def get_closest_clusters(clusters: list, distance_method: str, distance_metric: str):
@@ -189,40 +189,30 @@ class Cluster:
                    "Max": ["max", "complete"],
                    "Min": ["min", "single"],
                    "Average": ["avg", "average"]}   # alternative names for consistency with SciPy implementation
-        metrics = {"Euclidean": ["euclidean", "l2"],
-                   "Manhattan": ["manhattan", "l1"]}
 
-        # Select distance metric
-        if distance_metric in metrics["Euclidean"]:
-            metric = euclidean_distance
-        elif distance_metric in metrics["Manhattan"]:
-            metric = manhattan_distance
-        else:
-            raise AttributeError('"{0}" is not a supported metric for calculating cluster distances. '
-                                 'The following dictionary lists the supported metrics as keys, '
-                                 'and the corresponding keywords as values: {1}.'.format(distance_metric, metrics))
+        metric = DistanceMetric(distance_metric)
 
         # Select distance method
         if distance_method in methods["Centroid"]:
-            return metric(self.centroid, other_cluster.centroid)
+            return metric.calculate(self.centroid, other_cluster.centroid)
         elif distance_method in methods["Max"]:
             distances = []
             for idx, row in self.members.iterrows():
-                distance_per_cluster = [metric(row, r) for i, r in other_cluster.members.iterrows()]
+                distance_per_cluster = [metric.calculate(row, r) for i, r in other_cluster.members.iterrows()]
                 max_distance = max(distance_per_cluster)
                 distances.append(max_distance)
             return max(distances)
         elif distance_method in methods["Min"]:
             distances = []
             for idx, row in self.members.iterrows():
-                distance_per_cluster = [metric(row, r) for i, r in other_cluster.members.iterrows()]
+                distance_per_cluster = [metric.calculate(row, r) for i, r in other_cluster.members.iterrows()]
                 min_distance = min(distance_per_cluster)
                 distances.append(min_distance)
             return min(distances)
         elif distance_method in methods["Average"]:
             distances = []
             for idx, row in self.members.iterrows():
-                distance_per_cluster = [metric(row, r) for i, r in other_cluster.members.iterrows()]
+                distance_per_cluster = [metric.calculate(row, r) for i, r in other_cluster.members.iterrows()]
                 distances.extend(distance_per_cluster)
             return sum(distances) / len(distances)
         else:
