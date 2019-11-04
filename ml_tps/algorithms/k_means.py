@@ -6,6 +6,7 @@ from ml_tps.utils.distance_metric_utils import DistanceMetric
 
 def initialize_centroids(X: pd.DataFrame, k: int,
                          initial_centroids: pd.DataFrame = None,
+                         seed: int = None,
                          current_centroids: pd.DataFrame = None) -> pd.DataFrame:
     """Randomly picks k examples from data set as centroids."""
     if initial_centroids is not None:
@@ -19,6 +20,7 @@ def initialize_centroids(X: pd.DataFrame, k: int,
                              "that was passed ({1}).".format(len(current_centroids.columns), len(X.columns)))
         centroids = current_centroids
     else:
+        np.random.seed(seed)
         indexes = np.arange(len(X))
         np.random.shuffle(indexes)
         indexes = list(indexes)
@@ -62,7 +64,7 @@ class KMeans:
         self.metric = "euclidean"
 
     def fit(self, X: pd.DataFrame, k: int, iters: int = 300, tol: float = 0.0001,
-            initial_centroids: pd.DataFrame = None, plot_x_axis: str = None, plot_y_axis: str = None) -> None:
+            initial_centroids: pd.DataFrame = None, seed: int = None, plot_x_axis: str = None, plot_y_axis: str = None) -> None:
         """Clusters a given data set into k clusters using the K-Means algorithm.
 
         :param X: Data set on which to perform clustering.
@@ -70,10 +72,11 @@ class KMeans:
         :param iters: Maximum number of iterations before clustering is stopped.
         :param tol: Stop criteria for clustering. If the clustering error falls below the tolerance, clustering is stopped.
         :param initial_centroids: If so wished, the starting centroids can be passed.
+        :param seed: Set seed for the random initialization of the centroids for reproducibility.
         :param plot_x_axis: If this and plot_y_axis is passed, the data set is plotted on each iteration using these values as x and y axes.
         :param plot_y_axis: If this and plot_x_axis is passed, the data set is plotted on each iteration using these values as x and y axes.
         """
-        self.centroids = initialize_centroids(X, k, initial_centroids=initial_centroids, current_centroids=self.centroids)
+        self.centroids = initialize_centroids(X, k, initial_centroids=initial_centroids, seed=seed, current_centroids=self.centroids)
 
         X_assigned = assign_centroids(X, self.centroids, self.metric)
         error = self.cost(X_assigned)
