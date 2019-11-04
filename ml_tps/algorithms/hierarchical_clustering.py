@@ -157,6 +157,8 @@ class Cluster:
             self.construct_from_data(data)
         elif (cluster1 is not None) and (cluster2 is not None):
             self.construct_from_clusters(cluster1, cluster2)
+        else:
+            raise ValueError("Cluster trying to be built with no data and less than 2 cluster")
 
     def construct_from_data(self, data: pd.DataFrame) -> None:
         data = pd.DataFrame(data).T     # as a Series, the mean() is not computed as required for this purpose

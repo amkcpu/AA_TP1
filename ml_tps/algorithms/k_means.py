@@ -17,6 +17,7 @@ def initialize_centroids(X: pd.DataFrame, k: int,
         if not len(current_centroids.columns) == len(X.columns):
             raise ValueError("Already assigned centroids have a different dimension ({0}) than the data set "
                              "that was passed ({1}).".format(len(current_centroids.columns), len(X.columns)))
+        centroids = current_centroids
     else:
         indexes = np.arange(len(X))
         np.random.shuffle(indexes)
@@ -38,11 +39,16 @@ def assign_centroids(X: pd.DataFrame, centroids: pd.DataFrame) -> pd.DataFrame:
     return X_assigned
 
 
-def move_centroids(X_assigned: pd.DataFrame, centroids: pd.DataFrame) -> pd.DataFrame:
+def move_centroids(X_assigned: pd.DataFrame, centroids: pd.DataFrame, move_f_str: str = "mean") -> pd.DataFrame:
     """Moves the centroids to the mean of their corresponding examples."""
     for idx, row in centroids.iterrows():
         assigned_rows = X_assigned[X_assigned["Centroid"] == idx]
-        centroids.at[idx, :] = assigned_rows.drop("Centroid", axis=1).mean(axis=0)
+        if move_f_str.lower() == "mean":
+            centroids.at[idx, :] = assigned_rows.drop("Centroid", axis=1).mean(axis=0)
+        elif move_f_str.lower() == "median":
+            centroids.at[idx, :] = assigned_rows.drop("Centroid", axis=1).median(axis=0)
+        else:
+            raise ValueError(f"Move method {move_f_str} not supported")
 
     return centroids
 
@@ -51,6 +57,7 @@ class KMeans:
 
     def __init__(self, initial_centroids: pd.DataFrame = None):
         self.centroids = initial_centroids
+        self.move_f = "mean"
 
     def fit(self, X: pd.DataFrame, k: int, iters: int = 300, tol: float = 0.0001,
             initial_centroids: pd.DataFrame = None, plot_x_axis: str = None, plot_y_axis: str = None) -> None:
@@ -74,7 +81,7 @@ class KMeans:
                 self.plot(x_axis=plot_x_axis, y_axis=plot_y_axis, dataset=X, plot_centroids=True)
 
             centroids_prev = self.centroids.copy()
-            self.centroids = move_centroids(X_assigned, self.centroids)
+            self.centroids = move_centroids(X_assigned, self.centroids, self.move_f)
             X_assigned = assign_centroids(X, self.centroids)
 
             error = self.cost(X_assigned)
@@ -138,3 +145,10 @@ class KMeans:
             plt.scatter(self.centroids[x_axis], self.centroids[y_axis], c="black", marker="x", s=50)
 
         plt.show()
+
+
+class KMedians(KMeans):
+
+    def __init__(self, initial_centroids: pd.DataFrame = None):
+        super().__init__(initial_centroids)
+        self.move_f = "median"
