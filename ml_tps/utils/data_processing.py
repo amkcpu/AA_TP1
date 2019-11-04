@@ -78,11 +78,11 @@ def get_test_train_X_y(data: pd.DataFrame, objective: str, train_pctg: float = 0
     return X_train, y_train, X_test, y_test
 
 
-def add_bias_to_dataset(dataset: pd.DataFrame, normalize_columns: bool = False):
+def add_bias_to_dataset(dataset: pd.DataFrame, reset_columns: bool = False):
     """Add bias column consisting only of 1's to given data set as first column.
 
     :param dataset: Matrix to have bias column added
-    :param normalize_columns: If True, overrides columns with range from 0 to length (can be useful for preventing
+    :param reset_columns: If True, overrides columns with range from 0 to length (can be useful for preventing
                               matrix mismatches in matrix multiplication).
     :return: pandas.DataFrame with properties as noted in method description.
     """
@@ -90,8 +90,8 @@ def add_bias_to_dataset(dataset: pd.DataFrame, normalize_columns: bool = False):
     dataset_copy = dataset.copy()
     dataset_copy.insert(0, "Bias", ones)  # works inplace
 
-    if normalize_columns:
-        dataset_copy.columns = range(0, len(dataset_copy) + 1)
+    if reset_columns:
+        dataset_copy.columns = range(0, len(dataset_copy.columns))
 
     return dataset_copy
 

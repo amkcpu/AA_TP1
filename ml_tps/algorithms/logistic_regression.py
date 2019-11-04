@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from ml_tps.utils.formulas import sigmoid, l1_regularization, l2_regularization
-from ml_tps.utils.dataframe_utils import add_bias_to_dataset
+from ml_tps.utils.data_processing import add_bias_to_dataset
 
 
 class LogisticRegression:
@@ -29,15 +29,18 @@ class LogisticRegression:
         if self.theta is None:
             self.theta = pd.Series(np.zeros(len(X.columns) + 1))
 
-        X_biased = add_bias_to_dataset(X, normalize_columns=True)
+        if reg_type == "l1":
+            reg_method = l1_regularization
+        elif reg_type == "l2":
+            reg_method = l2_regularization
+        elif reg_type is None:
+            reg_method = lambda theta, lam: 0  # always map to 0
+
+        X_biased = add_bias_to_dataset(X, reset_columns=True)
         it = 0
         error = self.cost(X, y)
-        reg_term = 0
         while it < max_iter and error > tol:
-            if reg_type == "l1":
-                reg_term = l1_regularization(self.theta, lam)
-            elif reg_type == "l2":
-                reg_term = l2_regularization(self.theta, lam)
+            reg_term = reg_method(self.theta, lam)
 
             theta_update = alpha * (X_biased.T @ (sigmoid(X_biased @ self.theta) - y)) + reg_term
             bias_update = alpha * sum(sigmoid(X_biased @ self.theta) - y)
@@ -59,7 +62,7 @@ class LogisticRegression:
         if self.theta is None:
             raise ValueError("Model has not been fitted yet (regression parameters theta = None).")
 
-        X_biased = add_bias_to_dataset(X, normalize_columns=True)
+        X_biased = add_bias_to_dataset(X, reset_columns=True)
         predictions = sigmoid(X_biased @ self.theta)
         return predictions.apply(lambda x: 0 if x < 0.5 else 1)
 
@@ -74,5 +77,5 @@ class LogisticRegression:
             raise ValueError("Model has not been fitted yet (regression parameters theta = None).")
 
         n = len(X)
-        X_biased = add_bias_to_dataset(dataset=X, normalize_columns=True)
+        X_biased = add_bias_to_dataset(dataset=X, reset_columns=True)
         return -y.T @ np.log(sigmoid(X_biased @ self.theta)) - (1 - y).T @ np.log(1 - sigmoid(X_biased @ self.theta)) / n

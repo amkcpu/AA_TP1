@@ -30,7 +30,7 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
-def l1_regularization(theta: pd.DataFrame, lam: float):
+def l1_regularization(theta: pd.DataFrame, lam: float) -> float:
     """L1 regularization which uses absolute values.
 
     :param theta: Model parameters.
@@ -40,7 +40,7 @@ def l1_regularization(theta: pd.DataFrame, lam: float):
     return lam * np.abs(theta).sum().sum()
 
 
-def l2_regularization(theta: pd.DataFrame, lam: float):
+def l2_regularization(theta: pd.DataFrame, lam: float) -> float:
     """L2 regularization which uses squared values.
 
     :param theta: Model parameters.
