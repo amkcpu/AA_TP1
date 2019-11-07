@@ -5,8 +5,17 @@ from ml_tps.utils.distance_metric_utils import DistanceMetric
 
 class KNN:
 
-    def __init__(self, X_train: pd.DataFrame, y_train: pd.Series):
+    def __init__(self, X_train: pd.DataFrame = None, y_train: pd.Series = None):
         """Implements k-nearest neighbors algorithm.
+
+        :param X_train:     Training data wherein neighbors are searched. Attributes have to be numeric.
+        :param y_train:     Column containing values for classification objective.
+        """
+        self.X_train = X_train
+        self.y_train = y_train
+
+    def fit(self, X_train: pd.DataFrame, y_train: pd.Series):
+        """Set data set for instance-based classification.
 
         :param X_train:     Training data wherein neighbors are searched. Attributes have to be numeric.
         :param y_train:     Column containing values for classification objective.
