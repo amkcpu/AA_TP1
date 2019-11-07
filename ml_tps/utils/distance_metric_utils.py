@@ -17,7 +17,7 @@ class DistanceMetric:
         elif metric in metrics["Manhattan"]:
             self.metric = manhattan_distance
         else:
-            raise AttributeError('"{0}" is not a supported metric for calculating cluster distances. '
+            raise ValueError('"{0}" is not a supported metric for calculating cluster distances. '
                                  'The following dictionary lists the supported metrics as keys, '
                                  'and the corresponding keywords as values: {1}.'.format(metric, metrics))
 
