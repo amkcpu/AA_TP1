@@ -24,7 +24,7 @@ def initialize_centroids(X: pd.DataFrame, k: int,
         indexes = np.arange(len(X))
         np.random.shuffle(indexes)
         indexes = list(indexes)
-        centroids = pd.DataFrame([X.iloc[i] for i in indexes[:k]], index=range(1, k+1))
+        centroids = pd.DataFrame([X.iloc[i] for i in indexes[:k]], index=range(0, k))
 
     return centroids
 
@@ -147,6 +147,8 @@ class KMeans:
 
         X_assigned = assign_centroids(X=dataset, centroids=self.centroids, metric=self.metric)
         plt.scatter(X_assigned[x_axis], X_assigned[y_axis], c=X_assigned["Centroid"], s=50, cmap="Set3")
+        plt.xlabel(x_axis)
+        plt.ylabel(y_axis)
 
         if plot_centroids:
             plt.scatter(self.centroids[x_axis], self.centroids[y_axis], c="black", marker="x", s=50)
