@@ -38,22 +38,30 @@ def delete_non_numeric_columns(dataset: pd.DataFrame):
     return dataset
 
 
-def scale_dataset(dataset: pd.DataFrame, scaling_type: str = None, objective: str = None):
+def scale_dataset(dataset: pd.DataFrame, scaling_type: str = "standard", objective: str = None):
     """Scales/normalizes a given dataset.
 
     :param dataset:         Data set to be scaled.
-    :param scaling_type:    Scaling type used to normalize, defaulting to StandardScaler.
+    :param scaling_type:    Scaling type used to normalize. Supports "minmax", "maxabs", "robust", "standard".
     :param objective:       If passed, the column with this name will not be scaled.
     :returns: Scaled data set as pandas.DataFrame.
     """
-    if scaling_type == "minmax":
+    scaling_types = {"Minmax": ["minmax"],
+                     "MaxAbs": ["maxabs"],
+                     "Robust": ["robust"],
+                     "Standard": ["standard"]}
+    if scaling_type in scaling_types["Minmax"]:
         scaler = MinMaxScaler()  # (X - X.min()) / (X.max() - X.min())
-    elif scaling_type == "maxabs":
+    elif scaling_type in scaling_types["MaxAbs"]:
         scaler = MaxAbsScaler()  # X / abs(X.max())
-    elif scaling_type == "robust":
+    elif scaling_type in scaling_types["Robust"]:
         scaler = RobustScaler(quantile_range=(25.0, 75.0))  # X / X.quantile_range()
-    else:
+    elif scaling_type in scaling_types["Standard"]:
         scaler = StandardScaler(with_mean=True, with_std=True)  # (X - X.mean()) / X.std_deviation
+    else:
+        raise ValueError('"{0}" is not a supported scaling type. '
+                         'The following dictionary lists the supported types as keys, '
+                         'and the corresponding keywords as values: {1}.'.format(scaling_type, scaling_types))
 
     if objective is not None:
         X, y = separate_dataset_objective_data(dataset, objective)

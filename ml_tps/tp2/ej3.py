@@ -1,4 +1,5 @@
 import datetime
+import pandas as pd
 
 from ml_tps.algorithms.k_nearest_neighbors import knn
 from ml_tps.utils.evaluation import getConfusionMatrix, computeAccuracy, computePrecision, computeRecall, \
