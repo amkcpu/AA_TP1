@@ -1,40 +1,48 @@
 import pandas as pd
 import numpy as np
-from ml_tps.utils.data_processing import separate_dataset_objective_data
 from ml_tps.utils.distance_metric_utils import DistanceMetric
 
 
-def knn(example: pd.Series, training_set: pd.DataFrame, objective: str, k: int, weighted: bool):
-    """Implements k-nearest neighbors algorithm.
+class KNN:
 
-    :param example:        Example to be predicted.
-    :param training_set:   Training data wherein neighbors are searched. Attributes have to be numeric.
-    :param objective:      Specifies which column in the training set is the objective column.
-    :param k:              Amount of neighbors considered in KNN.
-    :param weighted:       If true, the prediction weighs the distance of each neighbor to the given example.
+    def __init__(self, X_train: pd.DataFrame, y_train: pd.Series):
+        """Implements k-nearest neighbors algorithm.
 
-    :returns: Prediction for given example using given training data.
+        :param X_train:     Training data wherein neighbors are searched. Attributes have to be numeric.
+        :param y_train:     Column containing values for classification objective.
+        """
+        self.X_train = X_train
+        self.y_train = y_train
 
-    :raises ValueError: When example does not have the same amount of attributes as training data.
-    """
-    if not len(example) + 1 == len(training_set.columns):
-        raise ValueError("Example does not have the same amount of attributes as training data.")
+    def predict(self, examples: pd.DataFrame, k: int, weighted: bool = False):
+        """Predict class for a given example using the k-nearest neighbors algorithm.
 
-    nearest_neighbors = get_nearest_neighbors(example, training_set, objective, k)
-    predicted_classes = prediction_per_class(nearest_neighbors, weighted)
-    predicted = choose_predict_class(predicted_classes)
+        :param examples: Examples to be predicted.
+        :param k: Amount of neighbors considered in KNN.
+        :param weighted: If true, the prediction weighs the distance of each neighbor to the given example.
+        :return: Prediction for each example using given training data.
+        :raises ValueError: When example does not have the same amount of attributes as training data.
+        """
+        if not len(examples.columns) == len(self.X_train.columns):
+            raise ValueError("Examples do not have the same amount of attributes as training data.")
 
-    return predicted
+        predictions = []
+        for idx, row in examples.iterrows():
+            nearest_neighbors = get_nearest_neighbors(row, self.X_train, self.y_train, k)
+            predicted_classes = prediction_per_class(nearest_neighbors, weighted)
+            predicted = choose_predict_class(predicted_classes)
+            predictions.append(predicted)
+
+        return pd.Series(predictions)
 
 
-def get_nearest_neighbors(example: pd.Series, training_set: pd.DataFrame, objective: str, k: int):
-    training_set_values, obj_values = separate_dataset_objective_data(dataset=training_set, objective=objective)
-    example.index = training_set_values.columns
+def get_nearest_neighbors(example: pd.Series, X_train: pd.DataFrame, y_train: pd.Series, k: int):
+    example.index = X_train.columns
 
     distance = DistanceMetric("euclidean")
-    neighbors = pd.Series([distance.calculate(row, example) for idx, row in training_set_values.iterrows()],
-                          index=training_set_values.index)
-    neighbors = pd.concat([neighbors, obj_values], axis=1)
+    neighbors = pd.Series([distance.calculate(row, example) for idx, row in X_train.iterrows()],
+                          index=X_train.index)
+    neighbors = pd.concat([neighbors, y_train], axis=1)
     neighbors.columns = ["Distance", "Class"]
     neighbors = neighbors.sort_values(by="Distance", ascending=True)
     return neighbors.head(k)  # grab k nearest neighbors
