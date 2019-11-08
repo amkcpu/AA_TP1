@@ -49,8 +49,7 @@ def get_nearest_neighbors(example: pd.Series, X_train: pd.DataFrame, y_train: pd
     example.index = X_train.columns
 
     distance = DistanceMetric("euclidean")
-    neighbors = pd.Series([distance.calculate(row, example) for idx, row in X_train.iterrows()],
-                          index=X_train.index)
+    neighbors = X_train.apply(lambda row: distance.calculate(row, example), axis=1)
     neighbors = pd.concat([neighbors, y_train], axis=1)
     neighbors.columns = ["Distance", "Class"]
     neighbors = neighbors.sort_values(by="Distance", ascending=True)
@@ -60,16 +59,18 @@ def get_nearest_neighbors(example: pd.Series, X_train: pd.DataFrame, y_train: pd
 
 def prediction_per_class(nearest_neighbors: pd.DataFrame, weighted: bool) -> pd.Series:
     available_classes = nearest_neighbors["Class"].unique()  # which classes occur in nearest neighbors
-    predicted_classes = pd.Series(np.array(np.zeros(len(available_classes))), index=available_classes)
 
+    if weighted:  # If weighted, use 1/dist^2 as weight
+        class_weight = lambda class_members: sum(1 / np.square(class_members["Distance"]))
+    else:
+        class_weight = lambda class_members: len(class_members)
+
+    predicted_classes = []
     for this_class in available_classes:
         class_members = nearest_neighbors[nearest_neighbors["Class"] == this_class]
-        if weighted:  # If weighted, use 1/dist^2 as weight
-            predicted_classes[this_class] = sum(1 / np.square(class_members["Distance"]))
-        else:
-            predicted_classes[this_class] = len(class_members["Class"])
+        predicted_classes.append(class_weight(class_members))
 
-    return predicted_classes.sort_values(ascending=False)
+    return pd.Series(predicted_classes, index=available_classes).sort_values(ascending=False)
 
 
 def choose_predict_class(predicted_classes: pd.Series) -> int:
