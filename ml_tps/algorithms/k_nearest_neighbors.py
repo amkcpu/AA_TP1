@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from ml_tps.utils.distance_metric_utils import DistanceMetric
+import os
+from pandas.api.types import is_numeric_dtype
 
 
 class KNN:
@@ -49,7 +51,7 @@ def get_nearest_neighbors(example: pd.Series, X_train: pd.DataFrame, y_train: pd
     example.index = X_train.columns
 
     distance = DistanceMetric("euclidean")
-    neighbors = X_train.apply(lambda row: distance.calculate(row, example), axis=1)
+    neighbors = distance.calculate_df(X_train, example)
     neighbors = pd.concat([neighbors, y_train], axis=1)
     neighbors.columns = ["Distance", "Class"]
     neighbors = neighbors.sort_values(by="Distance", ascending=True)
@@ -81,3 +83,19 @@ def choose_predict_class(predicted_classes: pd.Series) -> int:
 
     predicted = predicted_classes.head(1).index
     return predicted[0].astype(int)
+
+
+def euclidean_distance(df, point):
+    if len(df.columns) != len(point):
+        raise ArithmeticError("No. of attributes mismatch.")
+    return np.sqrt(np.square(df - point).sum(axis=1))
+
+
+dir_path = os.path.dirname(os.path.realpath("e1.ipynb"))
+filepath = f"{dir_path}/../tp3/data/acath.xls"
+data = pd.read_excel(filepath)
+data = data.dropna()
+
+tester = euclidean_distance(data, data.loc[0])
+
+a = 1

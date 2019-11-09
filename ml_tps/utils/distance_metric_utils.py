@@ -5,7 +5,7 @@ from pandas.api.types import is_numeric_dtype
 
 class DistanceMetric:
 
-    def __init__(self, metric: str):
+    def __init__(self, metric: str, pass_dataframe: bool = False):
         """Distance between two points using different distance metrics.
 
         :param metric: Distance metric to be used. Supports Euclidean ("euclidean", "l2") and Manhattan ("manhattan", "l1)."""
@@ -13,9 +13,9 @@ class DistanceMetric:
                    "Manhattan": ["manhattan", "l1"]}
 
         if metric in metrics["Euclidean"]:
-            self.metric = euclidean_distance
+            self.metric = "euclidean"
         elif metric in metrics["Manhattan"]:
-            self.metric = manhattan_distance
+            self.metric = "manhattan"
         else:
             raise ValueError('"{0}" is not a supported metric for calculating cluster distances. '
                                  'The following dictionary lists the supported metrics as keys, '
@@ -27,7 +27,21 @@ class DistanceMetric:
         if len(x1) != len(x2):
             raise ArithmeticError("Vectors must have same length.")
 
-        return self.metric(x1, x2)
+        if self.metric == "euclidean":
+            return euclidean_distance(x1, x2)
+        else:
+            return manhattan_distance(x1, x2)
+
+    def calculate_df(self, df: pd.DataFrame, point: pd.Series) -> pd.Series:
+        if not is_numeric_dtype(point) and ([is_numeric_dtype(df[col]) for col in df.columns].count(False) != 0):
+            raise ValueError("At least one attribute is not of numeric data type.")
+        if len(df.columns) != len(point):
+            raise ArithmeticError("Number of attributes mismatch.")
+
+        if self.metric == "euclidean":
+            return euclidean_distance_dataframe(df, point)
+        else:
+            return manhattan_distance_dataframe(df, point)
 
 
 def euclidean_distance(x1: pd.Series, x2: pd.Series) -> float:
@@ -35,6 +49,16 @@ def euclidean_distance(x1: pd.Series, x2: pd.Series) -> float:
     return np.sqrt(sum(np.square(x1 - x2)))
 
 
+def euclidean_distance_dataframe(df: pd.DataFrame, point: pd.Series) -> pd.Series:
+    """Metric based on squared distances. Also known as L2 or 2-Norm."""
+    return np.sqrt(np.square(df - point).sum(axis=1))
+
+
 def manhattan_distance(x1: pd.Series, x2: pd.Series) -> float:
     """Metric that sums the absolute distances. Also known as taxicab geometry metric, L1 or 1-Norm."""
     return sum(np.abs(x1 - x2))
+
+
+def manhattan_distance_dataframe(df: pd.DataFrame, point: pd.Series) -> pd.Series:
+    """Metric that sums the absolute distances. Also known as taxicab geometry metric, L1 or 1-Norm."""
+    return np.abs(df - point).sum(axis=1)

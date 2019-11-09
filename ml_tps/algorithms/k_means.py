@@ -35,8 +35,7 @@ def assign_centroids(X: pd.DataFrame, centroids: pd.DataFrame, metric: str = "eu
 
     distance = DistanceMetric(metric)
     for idx, row in X.iterrows():
-        distances = {i: distance.calculate(row, r) for i, r in centroids.iterrows()}    # calc distance to each centroid
-        closest_centroid = min(distances, key=distances.get)    # assign training example to closest centroid
+        closest_centroid = distance.calculate_df(centroids, row).idxmin()
         X_assigned.at[idx, "Centroid"] = closest_centroid
 
     return X_assigned
@@ -127,7 +126,7 @@ class KMeans:
         costs = dict()
         for idx, row in self.centroids.iterrows():
             assigned_rows = X_assigned[X_assigned["Centroid"] == idx].drop("Centroid", axis=1)
-            costs[idx] = sum([distance.calculate(row, r) for i, r in assigned_rows.iterrows()]) / len(assigned_rows)
+            costs[idx] = distance.calculate_df(assigned_rows, row).sum() / len(assigned_rows)
 
         if costs_per_class:
             return costs
