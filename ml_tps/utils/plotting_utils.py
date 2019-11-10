@@ -1,13 +1,9 @@
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-import os
 
 
 def plot_all_axes(data: pd.DataFrame, predictions: pd.Series, additional_points: pd.DataFrame = None) -> None:
-    """Plots data along all available dimensions colored according to their predictions.
-
-    Uses subplots with 4 columns and the necessary number of rows by default.
+    """Plots data along all available dimensions, colored according to their predictions.
 
     Uses as Matplotlib's "Set3" as colormap, providing for 12 distinct class colors.
 
@@ -17,31 +13,23 @@ def plot_all_axes(data: pd.DataFrame, predictions: pd.Series, additional_points:
     """
     columns_list = list(data.columns)
     no_attributes = len(columns_list)
+    no_columns = no_attributes - 1
+    no_rows = no_attributes
 
-    # If we plot all columns against each other (without repetition), how many subplots to we need
-    # Uses Gaussian addition formula n(n+1)/2, subtracting once the number of attributes, so there is no repetition
-    no_subplots = int(((no_attributes * (no_attributes + 1)) / 2) - no_attributes)
-
-    if no_attributes == 2:
-        subplot_no_columns = 1
-    elif no_attributes == 3:
-        subplot_no_columns = 3
-    else:
-        subplot_no_columns = 4  # default is 4 for better legibility of the plots
-    subplot_no_rows = int(np.ceil(no_subplots / subplot_no_columns))
-
-    i = 1
-    others = columns_list.copy()
+    fig, ax = plt.subplots(no_rows, no_columns, sharey=True)
+    fig.tight_layout()
+    i = 0
     for col in columns_list:
+        others = columns_list.copy()
         others.remove(col)
-        for other in others:
-            plt.subplot(subplot_no_rows, subplot_no_columns, i)
-            plt.subplots_adjust(bottom=0.7)
-            plt.scatter(data[other], data[col], c=predictions, s=10, cmap="Set3")
-            plt.xlabel(other, fontweight="bold")
-            plt.ylabel(col, fontweight="bold")
+        j = 0
+        ax[i, j].set_ylabel(col, fontweight="bold")
+        for row in others:
+            ax[i, j].scatter(data[row], data[col], c=predictions, s=10, cmap="Set3")
             if additional_points is not None:
-                plt.scatter(additional_points[other], additional_points[col], c="black", marker="x", s=20)
-            i += 1
+                ax[i, j].scatter(additional_points[row], additional_points[col], c="black", marker="x", s=20)
+            ax[i, j].set_xlabel(row)
+            j += 1
+        i += 1
 
     plt.show()
