@@ -52,14 +52,14 @@ class HierarchicalClustering:
         self.Z = None
         self.clusters = None
 
-    def fit(self, data: pd.DataFrame, distance_method: str, distance_metric: str,
-            max_no_clusters: int, compute_full_tree: bool = True) -> None:
+    def fit(self, data: pd.DataFrame, max_no_clusters: int, distance_method: str = "centroid",
+            distance_metric: str = "euclidean", compute_full_tree: bool = True) -> None:
         """Fits the bottom-up hierarchical clustering model and sets the class variables self.Z and self.clusters.
 
         :param data: Data set to be clustered.
+        :param max_no_clusters: Specifies the maximum number of clusters to be searched for by the algorithm.
         :param distance_method: Determines the method to be used for calculating the distance of the data points.
         :param distance_metric: Distance metric to be used. Supports Euclidean ("euclidean", "l2") and Manhattan ("manhattan", "l1).
-        :param max_no_clusters: Specifies the maximum number of clusters to be searched for by the algorithm.
         :param compute_full_tree: If set to False, the bottom-up clustering algorithm is interrupted as soon as
                                 the specified number of clusters has been reached.
                                 This may provide performance benefits if a dendrogram is not needed.
@@ -128,10 +128,11 @@ class HierarchicalClustering:
         plt.ylabel("Distance")
         plt.title("Hierarchical clustering dendrogram", fontweight="bold")
 
-        dn = dendrogram(self.Z)
+        dendrogram(self.Z)
         plt.show()
 
-    def plot(self, x_axis: str, y_axis: str, data: pd.DataFrame, distance_method: str, distance_metric: str) -> None:
+    def plot(self, x_axis: str, y_axis: str, data: pd.DataFrame,
+             distance_method: str = "centroid", distance_metric: str = "euclidean") -> None:
         """Plots passed on data along two specified axes, colored by its corresponding cluster.
 
         :param x_axis: Name of the DataFrame's column to be used as x-axis.
