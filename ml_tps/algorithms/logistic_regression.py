@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from ml_tps.utils.formulas import sigmoid
 from ml_tps.utils.data_processing import add_bias_to_dataset
 from ml_tps.utils.regularization_utils import Regularization
+from ml_tps.utils.plotting_utils import plot_all_axes
 
 
 class LogisticRegression:
@@ -88,3 +89,11 @@ class LogisticRegression:
         X_biased = add_bias_to_dataset(dataset=X, reset_columns=True)
         h = sigmoid(X_biased @ self.theta)
         return -y.T @ np.log(h) - ((1 - y.T) @ np.log(1 - h)) / n
+
+    def plot(self, X: pd.DataFrame, predictions: pd.Series) -> None:
+        """Plots given data set along all dimensions.
+
+        :param X: Data set to be clustered and plotted (does not include objective column).
+        :param predictions: Predicted classes for each example as Series.
+        """
+        plot_all_axes(X, predictions)

@@ -1,20 +1,15 @@
 import pandas as pd
 import numpy as np
 from ml_tps.utils.distance_metric_utils import DistanceMetric
-import os
-from pandas.api.types import is_numeric_dtype
+from ml_tps.utils.plotting_utils import plot_all_axes
 
 
 class KNN:
 
-    def __init__(self, X_train: pd.DataFrame = None, y_train: pd.Series = None):
-        """Implements k-nearest neighbors algorithm.
-
-        :param X_train:     Training data wherein neighbors are searched. Attributes have to be numeric.
-        :param y_train:     Column containing values for classification objective.
-        """
-        self.X_train = X_train
-        self.y_train = y_train
+    def __init__(self):
+        """Implements k-nearest neighbors algorithm."""
+        self.X_train = None
+        self.y_train = None
 
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series):
         """Set data set for instance-based classification.
@@ -32,8 +27,11 @@ class KNN:
         :param k: Amount of neighbors considered in KNN.
         :param weighted: If true, the prediction weighs the distance of each neighbor to the given example.
         :return: Prediction for each example using given training data.
+        :raises ValueError: When model has not been fitted yet.
         :raises ValueError: When example does not have the same amount of attributes as training data.
         """
+        if (self.X_train is None) or (self.y_train is None):
+            raise ValueError("Model has not been fitted yet.")
         if not len(examples.columns) == len(self.X_train.columns):
             raise ValueError("Examples do not have the same amount of attributes as training data.")
 
@@ -45,6 +43,14 @@ class KNN:
             predictions.append(predicted)
 
         return pd.Series(predictions)
+
+    def plot(self, X: pd.DataFrame, predictions: pd.Series) -> None:
+        """Plots given data set along all dimensions.
+
+        :param X: Data set to be clustered and plotted (does not include objective column).
+        :param predictions: Predicted classes for each example as Series.
+        """
+        plot_all_axes(data=X, predictions=predictions)
 
 
 def get_nearest_neighbors(example: pd.Series, X_train: pd.DataFrame, y_train: pd.Series, k: int) -> pd.DataFrame:
@@ -89,13 +95,3 @@ def euclidean_distance(df, point):
     if len(df.columns) != len(point):
         raise ArithmeticError("No. of attributes mismatch.")
     return np.sqrt(np.square(df - point).sum(axis=1))
-
-
-dir_path = os.path.dirname(os.path.realpath("e1.ipynb"))
-filepath = f"{dir_path}/../tp3/data/acath.xls"
-data = pd.read_excel(filepath)
-data = data.dropna()
-
-tester = euclidean_distance(data, data.loc[0])
-
-a = 1

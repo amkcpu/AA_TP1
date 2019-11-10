@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
-from matplotlib import pyplot as plt
 from ml_tps.utils.distance_metric_utils import DistanceMetric
+from ml_tps.utils.plotting_utils import plot_all_axes
 
 
 def initialize_centroids(X: pd.DataFrame, k: int,
@@ -63,7 +63,7 @@ class KMeans:
         self.metric = "euclidean"
 
     def fit(self, X: pd.DataFrame, k: int, iters: int = 300, tol: float = 0.0001,
-            initial_centroids: pd.DataFrame = None, seed: int = None, plot_x_axis: str = None, plot_y_axis: str = None) -> None:
+            initial_centroids: pd.DataFrame = None, seed: int = None, plot_centroid_updates: bool = False) -> None:
         """Clusters a given data set into k clusters using the K-Means algorithm.
 
         :param X: Data set on which to perform clustering.
@@ -72,8 +72,7 @@ class KMeans:
         :param tol: Stop criteria for clustering. If the clustering error falls below the tolerance, clustering is stopped.
         :param initial_centroids: If so wished, the starting centroids can be passed.
         :param seed: Set seed for the random initialization of the centroids for reproducibility.
-        :param plot_x_axis: If this and plot_y_axis is passed, the data set is plotted on each iteration using these values as x and y axes.
-        :param plot_y_axis: If this and plot_x_axis is passed, the data set is plotted on each iteration using these values as x and y axes.
+        :param plot_centroid_updates: If true, plots along each dimension are made on each iteration to be able to see the change of the centroids.
         """
         self.centroids = initialize_centroids(X, k, initial_centroids=initial_centroids, seed=seed, current_centroids=self.centroids)
 
@@ -81,8 +80,8 @@ class KMeans:
         error = self.cost(X_assigned)
         it = 0
         while it < iters and error > tol:
-            if (plot_x_axis is not None) and (plot_y_axis is not None):
-                self.plot(x_axis=plot_x_axis, y_axis=plot_y_axis, dataset=X, plot_centroids=True)
+            if plot_centroid_updates:
+                self.plot(X=X, predictions=X_assigned["Centroid"], plot_centroids=True)
 
             centroids_prev = self.centroids.copy()
             self.centroids = move_centroids(X_assigned, self.centroids, self.move_f)
@@ -90,7 +89,7 @@ class KMeans:
 
             error = self.cost(X_assigned)
             if self.centroids.equals(centroids_prev):    # break if centroids are stable
-                print("Centroids stable. K-Means finished.")
+                print("Centroids stable. Clustering finished.")
                 break
             it += 1
 
@@ -133,26 +132,20 @@ class KMeans:
         else:
             return sum(costs.values())
 
-    def plot(self, x_axis: str, y_axis: str, dataset: pd.DataFrame, plot_centroids: bool = True) -> None:
-        '''Plots given data set along two specified dimensions, clustered around previously fit centroids (indicated by their color).
-
-        :param x_axis: String specifying which column in the data set is to be used as x axis.
-        :param y_axis: String specifying which column in the data set is to be used as y axis.
-        :param dataset: Data set to be clustered and plotted.
+    def plot(self, X: pd.DataFrame, predictions: pd.Series, plot_centroids: bool = True) -> None:
+        '''Plots given data set along all dimensions, clustered around previously fit centroids (indicated by their color).
+        
+        :param X: Data set to be clustered and plotted (does not include objective column).
+        :param predictions: Predicted classes for each example as Series.
         :param plot_centroids: Boolean specifying whether the previously fit centroids are to be plotted as well.
         '''
         if self.centroids is None:
             raise ValueError("Model has not been fitted yet (centroids = None).")
 
-        X_assigned = assign_centroids(X=dataset, centroids=self.centroids, metric=self.metric)
-        plt.scatter(X_assigned[x_axis], X_assigned[y_axis], c=X_assigned["Centroid"], s=50, cmap="Set3")
-        plt.xlabel(x_axis)
-        plt.ylabel(y_axis)
-
         if plot_centroids:
-            plt.scatter(self.centroids[x_axis], self.centroids[y_axis], c="black", marker="x", s=50)
-
-        plt.show()
+            plot_all_axes(data=X, predictions=predictions, additional_points=self.centroids)
+        else:
+            plot_all_axes(data=X, predictions=predictions)
 
 
 class KMedians(KMeans):
