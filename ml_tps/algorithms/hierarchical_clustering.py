@@ -2,6 +2,7 @@ import pandas as pd
 from scipy.cluster.hierarchy import dendrogram
 import matplotlib.pyplot as plt
 from ml_tps.utils.distance_metric_utils import DistanceMetric
+from ml_tps.utils.plotting_utils import plot_all_axes
 
 
 def get_closest_clusters(clusters: list, distance_method: str, distance_metric: str):
@@ -131,19 +132,13 @@ class HierarchicalClustering:
         dendrogram(self.Z)
         plt.show()
 
-    def plot(self, x_axis: str, y_axis: str, data: pd.DataFrame,
-             distance_method: str = "centroid", distance_metric: str = "euclidean") -> None:
-        """Plots passed on data along two specified axes, colored by its corresponding cluster.
+    def plot(self, X: pd.DataFrame, predictions: pd.Series) -> None:
+        """Plots given data set along all dimensions.
 
-        :param x_axis: Name of the DataFrame's column to be used as x-axis.
-        :param y_axis: Name of the DataFrame's column to be used as y-axis.
-        :param data: Data to be assigned using the previously fitted clustering model.
-        :param distance_method: Determines the method to be used for calculating the distance of the examples to the model's clusters.
-        :param distance_metric: Distance metric to be used. Supports Euclidean ("euclidean", "l2") and Manhattan ("manhattan", "l1).
+        :param X: Data set to be clustered and plotted (does not include objective column).
+        :param predictions: Predicted classes for each example as Series.
         """
-        predictions = self.predict(data=data, distance_method=distance_method, distance_metric=distance_metric)
-        plt.scatter(data[x_axis], data[y_axis], c=predictions, s=50, cmap="Set3")
-        plt.show()
+        plot_all_axes(X, predictions)
 
 
 class Cluster:
