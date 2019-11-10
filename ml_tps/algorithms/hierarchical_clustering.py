@@ -53,11 +53,11 @@ class HierarchicalClustering:
         self.Z = None
         self.clusters = None
 
-    def fit(self, data: pd.DataFrame, distance_method: str, distance_metric: str,
+    def fit(self, X: pd.DataFrame, distance_method: str, distance_metric: str,
             max_no_clusters: int, compute_full_tree: bool = True) -> None:
         """Fits the bottom-up hierarchical clustering model and sets the class variables self.Z and self.clusters.
 
-        :param data: Data set to be clustered.
+        :param X: Data set to be clustered.
         :param distance_method: Determines the method to be used for calculating the distance of the data points.
         :param distance_metric: Distance metric to be used. Supports Euclidean ("euclidean", "l2") and Manhattan ("manhattan", "l1).
         :param max_no_clusters: Specifies the maximum number of clusters to be searched for by the algorithm.
@@ -65,7 +65,7 @@ class HierarchicalClustering:
                                 the specified number of clusters has been reached.
                                 This may provide performance benefits if a dendrogram is not needed.
         """
-        clusters = wrap_points_in_clusters(data)
+        clusters = wrap_points_in_clusters(X)
 
         allow_clusters_setting = True
         Z = []

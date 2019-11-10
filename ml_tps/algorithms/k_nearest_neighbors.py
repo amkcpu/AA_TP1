@@ -11,19 +11,19 @@ class KNN:
         self.X_train = None
         self.y_train = None
 
-    def fit(self, X_train: pd.DataFrame, y_train: pd.Series):
+    def fit(self, X: pd.DataFrame, y: pd.Series):
         """Set data set for instance-based classification.
 
-        :param X_train:     Training data wherein neighbors are searched. Attributes have to be numeric.
-        :param y_train:     Column containing values for classification objective.
+        :param X:     Training data wherein neighbors are searched. Attributes have to be numeric.
+        :param y:     Column containing values for classification objective.
         """
-        self.X_train = X_train
-        self.y_train = y_train
+        self.X_train = X
+        self.y_train = y
 
-    def predict(self, examples: pd.DataFrame, k: int, weighted: bool = False) -> pd.Series:
+    def predict(self, X: pd.DataFrame, k: int, weighted: bool = False) -> pd.Series:
         """Predict class for given examples using the k-nearest neighbors algorithm.
 
-        :param examples: Examples to be predicted.
+        :param X: Examples to be predicted.
         :param k: Amount of neighbors considered in KNN.
         :param weighted: If true, the prediction weighs the distance of each neighbor to the given example.
         :return: Prediction for each example using given training data.
@@ -32,11 +32,11 @@ class KNN:
         """
         if (self.X_train is None) or (self.y_train is None):
             raise ValueError("Model has not been fitted yet.")
-        if not len(examples.columns) == len(self.X_train.columns):
+        if not len(X.columns) == len(self.X_train.columns):
             raise ValueError("Examples do not have the same amount of attributes as training data.")
 
         predictions = []
-        for idx, row in examples.iterrows():
+        for idx, row in X.iterrows():
             nearest_neighbors = get_nearest_neighbors(row, self.X_train, self.y_train, k)
             predicted_classes = prediction_per_class(nearest_neighbors, weighted)
             predicted = choose_predict_class(predicted_classes)
@@ -89,9 +89,3 @@ def choose_predict_class(predicted_classes: pd.Series) -> int:
 
     predicted = predicted_classes.head(1).index
     return predicted[0].astype(int)
-
-
-def euclidean_distance(df, point):
-    if len(df.columns) != len(point):
-        raise ArithmeticError("No. of attributes mismatch.")
-    return np.sqrt(np.square(df - point).sum(axis=1))
