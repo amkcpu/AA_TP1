@@ -53,7 +53,7 @@ class KohonenNet:
                 lambda_ = np.e ** -(((win_i - i)**2 + (win_j - j)**2) / (2 * self.sigma()))
                 self.perceptrons[i * self.side + j].update_values(self.eta() * lambda_, row)
 
-    def fit(self, df: pd.DataFrame, side: int):
+    def fit(self, df: pd.DataFrame, side: int, min_eta = 0.1, alpha = 0.5):
         """Fits the Kohonen model and sets the class variables.
 
         :param X: Data set to be clustered.
@@ -62,6 +62,7 @@ class KohonenNet:
         self.perceptrons = [KohonenPerceptron(df) for _ in range(side*side)]
         self.side = side
         self.generations = 1
+        self.alpha = alpha
 
         stop = False
         while not stop:
@@ -71,7 +72,8 @@ class KohonenNet:
                 win_i, win_j = self.pick_winner(row)
                 self.update(win_i,win_j,row)
             self.generations += 1
-            stop = self.eta() < 1e1 # OR no changes
+            stop = self.eta() < min_eta # OR no changes
+            print(self.eta())
 
     def predict(self, data: pd.DataFrame):
         """Assigns each given example to the nearest net in the previously fitted model.
