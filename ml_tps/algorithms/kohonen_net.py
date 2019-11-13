@@ -50,7 +50,7 @@ class KohonenNet:
     def update(self, win_i: int, win_j: int, row: pd.Series):
         for i in range(self.side):
             for j in range(self.side):
-                lambda_ = np.e ** -(((win_i - i)**2 + (win_j - j)**2) / (2 * self.sigma()))
+                lambda_ = np.e ** -(((win_i - i)**2 + (win_j - j)**2) / (2 * self.sigma()**2))
                 self.perceptrons[i * self.side + j].update_values(self.eta() * lambda_, row)
 
     def fit(self, df: pd.DataFrame, side: int, min_eta = 0.1, alpha = 0.5):
@@ -71,7 +71,7 @@ class KohonenNet:
             for idx, row in df.iterrows():
                 win_i, win_j = self.pick_winner(row)
                 self.update(win_i,win_j,row)
-            self.generations += 1
+                self.generations += 1
             stop = self.eta() < min_eta # OR no changes
             print(self.eta())
 
