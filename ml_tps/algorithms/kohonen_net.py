@@ -79,7 +79,7 @@ class KohonenNet:
     def predict(self, data: pd.DataFrame):
         """Assigns each given example to the nearest net in the previously fitted model.
 
-        :param data: Data to be assigned using the previously fitted clustering model.
+        :param data: Data to be assigned using the previously fitted model.
         :return: Series containing the index number of each example's nearest cluster.
         """
         if self.perceptrons is []:
@@ -93,13 +93,35 @@ class KohonenNet:
         return predictions
 
     def plot(self, data: pd.DataFrame, objective: str) -> None:
+        """Plots the Kohonen map for all available classes as well as the summed activations for all classes.
+
+        :param data: Data to be predicted. Has to include an objective column containing the class label for each row.
+        :param objective: Name of the column to be interpreted as class label.
+        """
         classes = data[objective].unique()
 
-        image_data = pd.DataFrame(np.zeros([self.side, self.side]))
+        no_classes = len(classes) + 1           # +1 to account for image with summed activations.
+        no_columns = 4
+        no_rows = int(np.ceil(no_classes/no_columns))
 
+        fig, ax = plt.subplots(no_rows, no_columns, sharey=True)
+        fig.tight_layout()
+
+        summed_activations = pd.DataFrame(np.zeros([self.side, self.side]))
+
+        i = 0
+        j = 0
         for cl in classes:
             predictions = self.predict(data[data[objective] == cl].drop(objective, axis=1))
-            image_data += predictions
+            ax[i, j].set_title(cl)
+            ax[i, j].imshow(predictions, cmap="Greys")
+            summed_activations += predictions
 
-        plt.imshow(image_data, cmap="Greys")
+            j += 1
+            if j >= no_columns:
+                j = 0
+                i += 1
+
+        ax[i, j].set_title("All classes", fontweight="bold")
+        ax[i, j].imshow(summed_activations, cmap="Greys")
         plt.show()

@@ -53,12 +53,12 @@ class HierarchicalClustering:
         self.Z = None
         self.clusters = None
 
-    def fit(self, X: pd.DataFrame, max_no_clusters: int, distance_method: str = "centroid",
+    def fit(self, X: pd.DataFrame, no_clusters: int, distance_method: str = "centroid",
             distance_metric: str = "euclidean", compute_full_tree: bool = True) -> None:
         """Fits the bottom-up hierarchical clustering model and sets the class variables self.Z and self.clusters.
 
         :param X: Data set to be clustered.
-        :param max_no_clusters: Specifies the maximum number of clusters to be searched for by the algorithm.
+        :param no_clusters: Specifies the maximum number of clusters to be searched for by the algorithm.
         :param distance_method: Determines the method to be used for calculating the distance of the data points.
         :param distance_metric: Distance metric to be used. Supports Euclidean ("euclidean", "l2") and Manhattan ("manhattan", "l1).
         :param compute_full_tree: If set to False, the bottom-up clustering algorithm is interrupted as soon as
@@ -71,7 +71,7 @@ class HierarchicalClustering:
         Z = []
         current_index = len(clusters)
         while len(clusters) > 1:
-            if (len(clusters) <= max_no_clusters) and allow_clusters_setting:  # only set clusters once
+            if (len(clusters) <= no_clusters) and allow_clusters_setting:  # only set clusters once
                 self.clusters = clusters.copy()
                 allow_clusters_setting = False
                 if not compute_full_tree:
@@ -89,7 +89,7 @@ class HierarchicalClustering:
 
             current_index += 1
 
-        if max_no_clusters == 1:    # special case (is otherwise ignored by while loop)
+        if no_clusters == 1:    # special case (is otherwise ignored by while loop)
             self.clusters = clusters.copy()
 
         self.Z = pd.DataFrame(Z, columns=["Prev_Cluster 1", "Prev_Cluster 2", "Cluster Distance",
