@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from typing import List
+from matplotlib import pyplot as plt
 
 
 def row_to_array(row: pd.Series):
@@ -73,7 +74,7 @@ class KohonenNet:
                 self.update(win_i,win_j,row)
                 self.generations += 1
             stop = self.eta() < min_eta # OR no changes
-            print(self.eta())
+            print("Current eta = ", self.eta())
 
     def predict(self, data: pd.DataFrame):
         """Assigns each given example to the nearest net in the previously fitted model.
@@ -90,3 +91,15 @@ class KohonenNet:
             predictions[i][j] += 1
 
         return predictions
+
+    def plot(self, data: pd.DataFrame, objective: str) -> None:
+        classes = data[objective].unique()
+
+        image_data = pd.DataFrame(np.zeros([self.side, self.side]))
+
+        for cl in classes:
+            predictions = self.predict(data[data[objective] == cl].drop(objective, axis=1))
+            image_data += predictions
+
+        plt.imshow(image_data, cmap="Greys")
+        plt.show()

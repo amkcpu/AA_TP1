@@ -95,7 +95,7 @@ class HierarchicalClustering:
         self.Z = pd.DataFrame(Z, columns=["Prev_Cluster 1", "Prev_Cluster 2", "Cluster Distance",
                                           "No. original data points in cluster"])
 
-    def predict(self, data: pd.DataFrame, distance_method: str, distance_metric: str) -> pd.Series:
+    def predict(self, data: pd.DataFrame, distance_method: str = "centroid", distance_metric: str = "euclidean") -> pd.Series:
         """Assigns each given example to the nearest cluster in the previously fitted model.
 
         :param data: Data to be assigned using the previously fitted clustering model.
@@ -116,7 +116,7 @@ class HierarchicalClustering:
 
         return pd.Series(predictions)
 
-    def plot_dendrogram(self) -> None:
+    def plot_dendrogram(self, color_threshold: float = None) -> None:
         """Plot clustering's dendrogram using SciPy's dendrogram() method."""
         if (self.Z is None) and (self.clusters is None):
             raise ValueError("Model has not been fitted yet.")
@@ -129,7 +129,7 @@ class HierarchicalClustering:
         plt.ylabel("Distance")
         plt.title("Hierarchical clustering dendrogram", fontweight="bold")
 
-        dendrogram(self.Z)
+        dendrogram(self.Z, color_threshold=color_threshold)
         plt.show()
 
     def plot(self, X: pd.DataFrame, predictions: pd.Series) -> None:

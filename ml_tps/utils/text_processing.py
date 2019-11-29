@@ -60,7 +60,7 @@ def extract_words_from_text(text: str, prevent_uppercase_duplicates: bool = Fals
     return list_of_words
 
 
-def extract_text_from_directory(path_name: str) -> pd.DataFrame:
+def extract_text_from_directory(path_name: str, encoding: str = "utf-8") -> pd.DataFrame:
     """ Reads text from all documents found in a given directory into a DataFrame.
 
     :param path_name: Filepath to directory. Can also directly link to a single document.
@@ -76,11 +76,11 @@ def extract_text_from_directory(path_name: str) -> pd.DataFrame:
         i = 0
         for filename in os.listdir(path_name):
             # read file, using UTF-8 encoding ensuring that international characters can be read
-            extracted_text = codecs.open((path_name + filename), encoding="utf-8").read().lower()
+            extracted_text = codecs.open((path_name + filename), encoding=encoding).read().lower()
             text.insert(i, filename, [extracted_text])
             i += 1
     else:  # path_name is now interpreted as directly linking to a single file
-        extracted_text = codecs.open(path_name, encoding="utf-8").read().lower()
+        extracted_text = codecs.open(path_name, encoding=encoding).read().lower()
         text.insert(0, "Document1", extracted_text)
 
     return text
@@ -97,17 +97,18 @@ def no_unique_words(text: str, normalize: bool, prevent_uppercase_duplicates: bo
     extracted_words = extract_words_from_text(text, prevent_uppercase_duplicates)
 
     if normalize:
-        return int(extracted_words.nunique()[0]) / len(extracted_words)
+        return extracted_words.nunique() / len(extracted_words)
     else:
-        return int(extracted_words.nunique()[0])
+        return extracted_words.nunique()
 
 
-def word_frequency(text: str, list_of_words: list, normalize: bool, prevent_uppercase_duplicates: bool = True) -> pd.Series:
+def word_frequency(text: str, list_of_words: list, normalize: bool, average: bool = False, prevent_uppercase_duplicates: bool = True):
     """Return frequency (absolute or relative) of appearances of given words in given text.
 
     :param text: Text to be analyzed.
     :param list_of_words: List containing all words that are to be searched for in the text.
     :param normalize: If true, relative frequency is returned. Else, the absolute frequency.
+    :param average: If group of words is passed, averages the frequency of all words to give the frequency of the word group.
     :param prevent_uppercase_duplicates: Sets text to lower case to prevent having differently-cased,
                         but identical words appearing as unique words.
     :returns: Series containing the passed words as index and the word frequencies as values.
@@ -122,6 +123,9 @@ def word_frequency(text: str, list_of_words: list, normalize: bool, prevent_uppe
         except KeyError:
             freq_this_word = 0
         freq[word] = freq_this_word
+
+    if average:
+        return freq.sum() / len(freq)
 
     return freq
 
